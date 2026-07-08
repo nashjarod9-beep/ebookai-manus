@@ -1,6 +1,5 @@
 const puppeteer = require('puppeteer');
-const path = require('path');
-const fs = require('fs');
+const { uploadFile } = require('./supabase.service');
 
 const markdownToHTML = (md) => {
   if (!md) return '';
@@ -45,7 +44,7 @@ const buildEbookHTML = (book, chapters) => `
 </head>
 <body>
   <div class="cover">
-    ${book.coverUrl ? `<img src="http://localhost:${process.env.PORT || 5000}${book.coverUrl}" alt="Cover">` : ''}
+    ${book.coverUrl ? `<img src="${book.coverUrl.startsWith('http') ? book.coverUrl : `http://localhost:${process.env.PORT || 5000}${book.coverUrl}`}" alt="Cover">` : ''}
     <h1>${book.title}</h1>
   </div>
   
@@ -62,7 +61,7 @@ const buildEbookHTML = (book, chapters) => `
   ${chapters.map(c => `
     <div class="chapter">
       <h1>${c.title}</h1>
-      ${c.imageUrl ? `<img src="http://localhost:${process.env.PORT || 5000}${c.imageUrl}" alt="Chapter Image">` : ''}
+      ${c.imageUrl ? `<img src="${c.imageUrl.startsWith('http') ? c.imageUrl : `http://localhost:${process.env.PORT || 5000}${c.imageUrl}`}" alt="Chapter Image">` : ''}
       <div>${markdownToHTML(c.content)}</div>
     </div>
   `).join('')}
@@ -86,23 +85,19 @@ const generatePDF = async (book, chapters) => {
   await page.setContent(html, { waitUntil: 'networkidle0' });
 
   const filename = `ebook_${book.id}_${Date.now()}.pdf`;
-  const pdfsDir = path.join(__dirname, '../../uploads/pdfs');
-  
-  if (!fs.existsSync(pdfsDir)) {
-    fs.mkdirSync(pdfsDir, { recursive: true });
-  }
 
-  const filepath = path.join(pdfsDir, filename);
-
-  await page.pdf({
-    path: filepath,
+  const pdfBuffer = await page.pdf({
     format: 'A4',
     printBackground: true,
     margin: { top: '20mm', bottom: '20mm', left: '18mm', right: '18mm' }
   });
 
   await browser.close();
-  return `/uploads/pdfs/${filename}`;
+
+  // Upload to Supabase Storage
+  const publicUrl = await uploadFile(pdfBuffer, `pdfs/${filename}`, 'application/pdf');
+  
+  return publicUrl;
 };
 
 module.exports = { generatePDF };

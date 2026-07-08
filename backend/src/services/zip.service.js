@@ -1,24 +1,29 @@
 const archiver = require('archiver');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const { uploadFile } = require('./supabase.service');
 
 const generateZip = async (book, chapters) => {
   return new Promise((resolve, reject) => {
     const filename = `ebook_${book.id}_${Date.now()}.zip`;
-    const exportsDir = path.join(__dirname, '../../uploads/exports');
-    
-    if (!fs.existsSync(exportsDir)) {
-      fs.mkdirSync(exportsDir, { recursive: true });
-    }
-    
-    const filepath = path.join(exportsDir, filename);
+    // Use OS temp dir which is writable on Vercel Serverless
+    const filepath = path.join(os.tmpdir(), filename);
     const output = fs.createWriteStream(filepath);
     const archive = archiver('zip', {
       zlib: { level: 9 } // Sets the compression level.
     });
 
-    output.on('close', function() {
-      resolve(`/uploads/exports/${filename}`);
+    output.on('close', async function() {
+      try {
+        const fileBuffer = fs.readFileSync(filepath);
+        const publicUrl = await uploadFile(fileBuffer, `exports/${filename}`, 'application/zip');
+        // Clean up temp file
+        fs.unlinkSync(filepath);
+        resolve(publicUrl);
+      } catch (err) {
+        reject(err);
+      }
     });
 
     archive.on('error', function(err) {
@@ -44,7 +49,7 @@ const generateZip = async (book, chapters) => {
     <body>
       <div class="container">
         <h1>${book.title}</h1>
-        ${book.coverUrl ? `<img src=".${book.coverUrl}" alt="Cover">` : ''}
+        ${book.coverUrl ? `<img src="${book.coverUrl}" alt="Cover">` : ''}
         <p>${book.description || ''}</p>
         
         <h2>Sommaire</h2>
@@ -55,7 +60,7 @@ const generateZip = async (book, chapters) => {
         ${chapters.map((c, i) => `
           <div id="chap-${i}" style="margin-top: 40px;">
             <h2>${c.title}</h2>
-            ${c.imageUrl ? `<img src=".${c.imageUrl}" alt="Chapter ${i}">` : ''}
+            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="Chapter ${i}">` : ''}
             <div>
               ${c.content.replace(/\n/g, '<br>')}
             </div>
@@ -68,22 +73,9 @@ const generateZip = async (book, chapters) => {
 
     archive.append(htmlContent, { name: 'index.html' });
 
-    // Append images
-    if (book.coverUrl) {
-      const coverPath = path.join(__dirname, '../..', book.coverUrl);
-      if (fs.existsSync(coverPath)) {
-        archive.file(coverPath, { name: book.coverUrl.replace('/uploads/', 'uploads/') });
-      }
-    }
-
-    chapters.forEach(c => {
-      if (c.imageUrl) {
-        const imgPath = path.join(__dirname, '../..', c.imageUrl);
-        if (fs.existsSync(imgPath)) {
-          archive.file(imgPath, { name: c.imageUrl.replace('/uploads/', 'uploads/') });
-        }
-      }
-    });
+    // Since we no longer download images locally, we can't append them easily from disk.
+    // In a real Vercel environment, we just link to the remote Supabase images in HTML.
+    // The ZIP will contain the interactive HTML which loads images remotely.
 
     archive.finalize();
   });

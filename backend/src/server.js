@@ -39,7 +39,8 @@ dirs.forEach(dir => {
 });
 
 // Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Vercel Serverless doesn't need to serve local /uploads anymore since we use Supabase
+// app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -51,7 +52,13 @@ app.use('/api/export', exportRoutes);
 // Error Handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Only listen if not running in Vercel (Vercel sets VERCEL=1 or similar env vars, but exporting app is standard)
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export for Vercel Serverless Functions
+module.exports = app;
