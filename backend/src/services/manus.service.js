@@ -1,3 +1,55 @@
+function repairTruncatedJson(jsonString) {
+  let str = jsonString.trim();
+  
+  // Balance quotes first
+  let openQuote = false;
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '"' && (i === 0 || str[i-1] !== '\\')) {
+      openQuote = !openQuote;
+    }
+  }
+  if (openQuote) {
+    str += '"';
+  }
+  
+  // Clean up trailing commas if they are outside strings at the very end
+  str = str.trim();
+  if (str.endsWith(',')) {
+    str = str.slice(0, -1).trim();
+  }
+
+  // Track open brackets and braces
+  let stack = [];
+  let inString = false;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '"' && (i === 0 || str[i-1] !== '\\')) {
+      inString = !inString;
+    }
+    if (!inString) {
+      if (char === '{' || char === '[') {
+        stack.push(char);
+      } else if (char === '}') {
+        if (stack[stack.length - 1] === '{') stack.pop();
+      } else if (char === ']') {
+        if (stack[stack.length - 1] === '[') stack.pop();
+      }
+    }
+  }
+
+  // Close open structures
+  while (stack.length > 0) {
+    const last = stack.pop();
+    if (last === '{') {
+      str += '}';
+    } else if (last === '[') {
+      str += ']';
+    }
+  }
+  
+  return str;
+}
+
 const callManusCreate = async (prompt) => {
   const apiKey = process.env.MANUS_API_KEY;
   if (!apiKey) {
@@ -145,7 +197,8 @@ const getTaskStatusAndResult = async (taskId) => {
         const content = assistantMsg.assistant_message.content;
         try {
           const cleanContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-          const jsonResult = JSON.parse(cleanContent);
+          const repairedContent = repairTruncatedJson(cleanContent);
+          const jsonResult = JSON.parse(repairedContent);
           return { status: 'completed', result: jsonResult };
         } catch (err) {
           console.error("JSON parsing error on assistant message:", content);
