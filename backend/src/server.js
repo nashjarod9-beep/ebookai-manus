@@ -16,6 +16,9 @@ const exportRoutes = require('./routes/export.routes');
 
 const app = express();
 
+// Trust proxy (required for express-rate-limit behind reverse proxies like Vercel)
+app.set('trust proxy', 1);
+
 // Security and utility middlewares
 app.use(helmet());
 app.use(cors());

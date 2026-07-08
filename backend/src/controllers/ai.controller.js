@@ -1,13 +1,12 @@
-const { generateOutline, generateFullEbook } = require('../services/manus.service');
+const { createOutlineTask, createFullEbookTask, getTaskStatusAndResult } = require('../services/manus.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const generateBookOutline = async (req, res, next) => {
   try {
     const ebookData = req.body;
-    // ebookData includes: title, theme, objective, audience, tone, length, language
-    const outline = await generateOutline(ebookData);
-    res.json(outline);
+    const taskId = await createOutlineTask(ebookData);
+    res.json({ taskId });
   } catch (error) {
     next(error);
   }
@@ -25,24 +24,36 @@ const generateFullBookFromOutline = async (req, res, next) => {
       }
     }
 
-    const fullEbookResult = await generateFullEbook(outline, ebookData);
-    
-    // Save generated content to database
-    if (bookId && fullEbookResult) {
+    const taskId = await createFullEbookTask(outline, ebookData);
+    res.json({ taskId });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAiTaskStatus = async (req, res, next) => {
+  try {
+    const { taskId } = req.params;
+    const { bookId } = req.query;
+
+    const statusData = await getTaskStatusAndResult(taskId);
+
+    // If it's completed and we have a bookId, save the results to the DB
+    if (statusData.status === 'completed' && bookId && statusData.result) {
+      const fullEbookResult = statusData.result;
+      
+      const updateData = { status: 'ready' };
       if (fullEbookResult.coverUrl) {
-        await prisma.book.update({
-          where: { id: bookId },
-          data: { coverUrl: fullEbookResult.coverUrl, status: 'ready' }
-        });
-      } else {
-        await prisma.book.update({
-          where: { id: bookId },
-          data: { status: 'ready' }
-        });
+        updateData.coverUrl = fullEbookResult.coverUrl;
       }
+      
+      await prisma.book.update({
+        where: { id: bookId },
+        data: updateData
+      });
 
       if (fullEbookResult.chapters && Array.isArray(fullEbookResult.chapters)) {
-        // First delete any existing chapters to avoid duplicates if re-generating
+        // First delete any existing chapters to avoid duplicates
         await prisma.chapter.deleteMany({ where: { bookId } });
         
         for (let i = 0; i < fullEbookResult.chapters.length; i++) {
@@ -51,7 +62,7 @@ const generateFullBookFromOutline = async (req, res, next) => {
             data: {
               bookId,
               title: ch.title,
-              content: ch.content,
+              content: ch.content || '',
               order: i + 1,
               imageUrl: ch.imageUrl
             }
@@ -60,7 +71,7 @@ const generateFullBookFromOutline = async (req, res, next) => {
       }
     }
 
-    res.json(fullEbookResult);
+    res.json(statusData);
   } catch (error) {
     next(error);
   }
@@ -68,5 +79,6 @@ const generateFullBookFromOutline = async (req, res, next) => {
 
 module.exports = {
   generateBookOutline,
-  generateFullBookFromOutline
+  generateFullBookFromOutline,
+  getAiTaskStatus
 };

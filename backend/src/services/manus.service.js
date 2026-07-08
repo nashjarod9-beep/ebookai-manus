@@ -1,53 +1,48 @@
-const MANUS_API_URL = 'https://api.manus.ai/v1/chat/completions'; // Utilisation de l'endpoint compatible OpenAI v1 pour Manus AI
-
-const callManusAI = async (messages, responseFormat = null) => {
+const callManusCreate = async (prompt) => {
   const apiKey = process.env.MANUS_API_KEY;
-  
   if (!apiKey) {
     throw new Error('La clé API Manus AI est manquante dans les variables d\'environnement.');
   }
 
-  const payload = {
-    model: 'manus', // Nom du modèle par défaut
-    messages: messages,
-    temperature: 0.7,
-  };
-
-  if (responseFormat) {
-    payload.response_format = responseFormat;
-  }
-
   try {
-    const response = await fetch(MANUS_API_URL, {
+    const response = await fetch('https://api.manus.ai/v2/task.create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'x-manus-api-key': apiKey
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        message: {
+          content: prompt
+        }
+      })
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Erreur Manus API: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(`Erreur Manus API: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    return data.choices[0].message.content;
+    if (!data.ok) {
+      throw new Error(data.error?.message || 'Erreur lors de la création de la tâche Manus.');
+    }
+
+    return data.task_id;
   } catch (error) {
-    console.error("Manus AI Request Error:", error);
-    throw new Error('Erreur lors de la communication avec Manus AI.');
+    console.error("Manus AI Task Creation Error:", error);
+    throw new Error('Erreur lors de l\'initialisation de la génération avec Manus AI.');
   }
 };
 
-const generateOutline = async (ebookData) => {
+const createOutlineTask = async (ebookData) => {
   const { title, theme, objective, audience, tone, length, language } = ebookData;
 
   const prompt = `
 Tu es un agent expert en conception et rédaction d'ebooks professionnels.
 Génère une structure détaillée pour un ebook basé sur les critères suivants :
 - Thème : "${theme}"
-- Titre provisoire : "${title}"
+- Titre provisoire : "${title || theme}"
 - Objectif de l'ebook : "${objective}"
 - Public cible : "${audience}"
 - Ton : "${tone}"
@@ -70,26 +65,15 @@ Réponds UNIQUEMENT en JSON valide, avec la structure suivante (sans markdown ma
 }
 Le nombre de chapitres doit être adapté à la longueur souhaitée (${length}). JSON uniquement, rien d'autre.`;
 
-  const content = await callManusAI([
-    { role: 'system', content: 'Tu es un architecte d\'ebooks.' },
-    { role: 'user', content: prompt }
-  ]);
-
-  try {
-    const cleanContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanContent);
-  } catch (error) {
-    console.error("Erreur de parsing de la structure Manus:", content);
-    throw new Error("Le format renvoyé par Manus AI n'est pas un JSON valide.");
-  }
+  return await callManusCreate(prompt);
 };
 
-const generateFullEbook = async (outline, ebookData) => {
-  const { theme, objective, audience, tone, length, language } = ebookData;
+const createFullEbookTask = async (outline, ebookData) => {
+  const { theme, objective, audience, tone, language } = ebookData;
 
   const prompt = `
 Tu es un agent IA avancé (Manus AI) capable de rédiger du contenu, générer des images et formater un document de manière autonome.
-Ton objectif final est de générer l'ebook complet décrit ci-dessous, d'y inclure les illustrations générées par tes soins, et idéalement de fournir un lien vers le document PDF final si tu en as la capacité.
+Ton objectif final est de générer l'ebook complet décrit ci-dessous, d'y inclure les illustrations générées par tes soins, et de fournir un lien vers le document PDF final.
 
 Contexte de l'ebook :
 - Titre : "${outline.title}"
@@ -122,21 +106,64 @@ Réponds UNIQUEMENT avec un objet JSON valide correspondant à cette structure :
 }
 JSON uniquement, sans aucun texte autour.`;
 
-  const content = await callManusAI([
-    { role: 'system', content: 'Tu es un générateur autonome d\'ebooks complets (Texte + Images + PDF).' },
-    { role: 'user', content: prompt }
-  ]);
+  return await callManusCreate(prompt);
+};
+
+const getTaskStatusAndResult = async (taskId) => {
+  const apiKey = process.env.MANUS_API_KEY;
+  if (!apiKey) {
+    throw new Error('La clé API Manus AI est manquante.');
+  }
 
   try {
-    const cleanContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanContent);
+    const response = await fetch(`https://api.manus.ai/v2/task.listMessages?task_id=${taskId}`, {
+      method: 'GET',
+      headers: {
+        'x-manus-api-key': apiKey
+      }
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur récupération tâche: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    if (!data.ok) {
+      throw new Error(data.error?.message || 'Erreur de lecture de tâche.');
+    }
+
+    const messages = data.messages || [];
+
+    // Check if task is stopped
+    const stoppedMsg = messages.find(m => m.type === 'status_update' && m.status_update?.agent_status === 'stopped');
+
+    if (stoppedMsg) {
+      // Find the assistant message content
+      const assistantMsg = messages.find(m => m.type === 'assistant_message');
+      if (assistantMsg && assistantMsg.assistant_message?.content) {
+        const content = assistantMsg.assistant_message.content;
+        try {
+          const cleanContent = content.replace(/```json/gi, '').replace(/```/g, '').trim();
+          const jsonResult = JSON.parse(cleanContent);
+          return { status: 'completed', result: jsonResult };
+        } catch (err) {
+          console.error("JSON parsing error on assistant message:", content);
+          return { status: 'failed', error: "Le format renvoyé par l'IA n'est pas un JSON valide." };
+        }
+      }
+      return { status: 'failed', error: "Aucun contenu généré n'a été trouvé." };
+    }
+
+    return { status: 'generating' };
   } catch (error) {
-    console.error("Erreur de parsing du contenu final Manus:", content);
-    throw new Error("Le format final renvoyé par Manus AI n'est pas un JSON valide.");
+    console.error("Error getting task status:", error);
+    return { status: 'failed', error: error.message };
   }
 };
 
 module.exports = {
-  generateOutline,
-  generateFullEbook
+  createOutlineTask,
+  createFullEbookTask,
+  getTaskStatusAndResult
 };
