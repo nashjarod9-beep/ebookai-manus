@@ -1,4 +1,4 @@
-const MANUS_API_URL = 'https://api.manus.ai/v2/chat/completions'; // Utilisation d'un endpoint compatible OpenAI par défaut pour l'API v2
+const MANUS_API_URL = 'https://api.manus.ai/v1/chat/completions'; // Utilisation de l'endpoint compatible OpenAI v1 pour Manus AI
 
 const callManusAI = async (messages, responseFormat = null) => {
   const apiKey = process.env.MANUS_API_KEY;
