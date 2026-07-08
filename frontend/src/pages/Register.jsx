@@ -17,7 +17,10 @@ export default function Register() {
       await register(name, email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Une erreur est survenue');
+      const errorMsg = err.response?.data?.message || err.message || 'Une erreur est survenue';
+      const statusCode = err.response?.status ? ` (Code: ${err.response.status})` : '';
+      setError(errorMsg + statusCode);
+      console.error('Registration error:', err);
     }
   };
 
