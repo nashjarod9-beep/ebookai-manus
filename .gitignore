@@ -1,0 +1,10 @@
+node_modules
+.env
+dist
+dev.db
+.dev.db*
+uploads/images/*
+uploads/pdfs/*
+uploads/exports/*
+uploads/audios/*
+!uploads/**/.gitkeep
