@@ -72,6 +72,61 @@ const loginUser = async (req, res, next) => {
   }
 };
 
+const googleAuth = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ message: 'Token Google manquant' });
+    }
+
+    // Verify token with Google's API natively using fetch
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+
+    if (!response.ok) {
+      return res.status(400).json({ message: 'Token Google invalide' });
+    }
+
+    const payload = await response.json();
+
+    // Verify client ID if VITE_GOOGLE_CLIENT_ID is set
+    const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+    if (googleClientId && payload.aud !== googleClientId) {
+      return res.status(400).json({ message: 'Audience Google invalide' });
+    }
+
+    const { email, name } = payload;
+
+    // Check if user already exists
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Create user if they don't exist
+      const salt = await bcrypt.genSalt(10);
+      const dummyPassword = Math.random().toString(36).substring(2);
+      const passwordHash = await bcrypt.hash(dummyPassword, salt);
+
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          passwordHash,
+        }
+      });
+    }
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      plan: user.plan,
+      token: generateToken(user.id)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getMe = async (req, res, next) => {
   try {
     res.json(req.user);
@@ -83,5 +138,6 @@ const getMe = async (req, res, next) => {
 module.exports = {
   registerUser,
   loginUser,
+  googleAuth,
   getMe,
 };

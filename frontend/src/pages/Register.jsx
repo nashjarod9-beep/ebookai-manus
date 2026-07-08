@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -7,8 +7,9 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
+  const googleButtonRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,6 +20,29 @@ export default function Register() {
       setError(err.response?.data?.message || 'Une erreur est survenue');
     }
   };
+
+  const handleGoogleCallback = async (response) => {
+    try {
+      await googleLogin(response.credential);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Erreur d\'authentification avec Google');
+    }
+  };
+
+  useEffect(() => {
+    /* global google */
+    if (typeof google !== 'undefined') {
+      google.accounts.id.initialize({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || "333333333333-dummyclientid.apps.googleusercontent.com",
+        callback: handleGoogleCallback,
+      });
+      google.accounts.id.renderButton(
+        googleButtonRef.current,
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    }
+  }, []);
 
   return (
     <div className="flex justify-center items-center h-[calc(100vh-64px)]">
@@ -60,7 +84,19 @@ export default function Register() {
             Créer un compte
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-2 text-muted-foreground">Ou continuer avec</span>
+          </div>
+        </div>
+
+        <div ref={googleButtonRef} className="w-full flex justify-center"></div>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Déjà un compte ? <Link to="/login" className="text-primary hover:underline">Se connecter</Link>
         </p>
       </div>

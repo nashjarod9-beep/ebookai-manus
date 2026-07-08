@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+const isProd = typeof window !== 'undefined' && (window.location.hostname.includes('vercel.app') || !window.location.hostname.includes('localhost'));
+const baseURL = import.meta.env.VITE_API_URL || (isProd ? '/api' : 'http://localhost:5000/api');
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL,
 });
 
 api.interceptors.request.use((config) => {

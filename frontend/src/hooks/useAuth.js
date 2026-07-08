@@ -21,10 +21,17 @@ export function useAuth() {
     return res.data;
   };
 
+  const googleLogin = async (credentialToken) => {
+    const res = await api.post('/auth/google', { token: credentialToken });
+    localStorage.setItem('user', JSON.stringify(res.data));
+    setUser(res.data);
+    return res.data;
+  };
+
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
   };
 
-  return { user, login, register, logout };
+  return { user, login, register, googleLogin, logout };
 }
