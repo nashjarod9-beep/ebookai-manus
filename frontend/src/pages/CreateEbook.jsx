@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateEbook } from '../hooks/useEbook';
 import { useAI } from '../hooks/useAI';
+import api from '../lib/axios';
 import { Loader2, ArrowRight, Check, Sparkles } from 'lucide-react';
 
 export default function CreateEbook() {
@@ -17,11 +18,12 @@ export default function CreateEbook() {
   const [outline, setOutline] = useState(null);
   const [bookId, setBookId] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [progressMessage, setProgressMessage] = useState('');
   const [resultData, setResultData] = useState(null);
 
   const navigate = useNavigate();
   const createEbook = useCreateEbook();
-  const { generateOutline, generateFullEbook } = useAI();
+  const { generateOutline, generateCover, generateChapter } = useAI();
 
   const handleOutlineGeneration = async () => {
     setIsGenerating(true);
@@ -41,34 +43,55 @@ export default function CreateEbook() {
     setIsGenerating(true);
     setStep(3);
     try {
-      // 1. Create book draft in DB
-      const book = await createEbook.mutateAsync({
-        title: outline.title,
-        subject: formData.theme,
-        description: outline.description,
-        language: formData.language,
-        format: 'static'
-      });
-      setBookId(book.id);
-
-      // 2. Call Manus AI to generate the full content
-      const finalEbook = await generateFullEbook(outline, formData, book.id);
+      let currentBookId = bookId;
       
-      setResultData(finalEbook);
+      // 1. Create book draft in DB if not already created (for retry resilience)
+      if (!currentBookId) {
+        setProgressMessage("Création du livre dans la base de données...");
+        const book = await createEbook.mutateAsync({
+          title: outline.title,
+          subject: formData.theme,
+          description: outline.description,
+          language: formData.language,
+          format: 'static'
+        });
+        currentBookId = book.id;
+        setBookId(book.id);
+      }
+
+      // 2. Generate cover image via FLUX (BFL)
+      setProgressMessage("Génération de la couverture avec l'IA FLUX...");
+      const coverUrl = await generateCover(currentBookId, outline.coverImagePrompt);
+      console.log("Couverture générée :", coverUrl);
+
+      // 3. Generate chapters sequentially to avoid serverless timeouts
+      for (let i = 0; i < outline.chapters.length; i++) {
+        const ch = outline.chapters[i];
+        setProgressMessage(`Génération du chapitre ${i + 1}/${outline.chapters.length} : "${ch.title}"...`);
+        const result = await generateChapter(currentBookId, ch, formData);
+        console.log(`Chapitre ${i + 1} généré avec succès :`, result);
+      }
+
+      // 4. Generate final PDF using Puppeteer
+      setProgressMessage("Compilation et mise en page du document PDF professionnel...");
+      const { data: pdfResult } = await api.post(`/export/pdf/${currentBookId}`);
+      
+      setResultData({ pdfUrl: pdfResult.pdfPath });
       setStep(4);
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la génération complète de l'ebook par Manus AI.");
-      setStep(2); // Go back if failed
+      alert("Erreur lors de la génération de l'ebook. Vous pourrez reprendre la génération là où elle a échoué.");
+      setStep(2); // Go back to allow retrying
     } finally {
       setIsGenerating(false);
+      setProgressMessage('');
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Créer un nouvel ebook via Manus AI</h1>
+        <h1 className="text-3xl font-bold mb-4">Créer un nouvel ebook avec l'IA</h1>
         {/* Progress Bar */}
         <div className="flex items-center justify-between relative">
           <div className="absolute left-0 top-1/2 w-full h-1 bg-muted -z-10 -translate-y-1/2"></div>
@@ -175,7 +198,7 @@ export default function CreateEbook() {
         {step === 2 && outline && (
           <div className="space-y-6">
             <h2 className="text-xl font-semibold">Étape 2 : Validation de la structure</h2>
-            <p className="text-muted-foreground text-sm">Vérifiez et ajustez le plan proposé par Manus AI avant de lancer la rédaction complète.</p>
+            <p className="text-muted-foreground text-sm">Vérifiez et ajustez le plan proposé par l'IA avant de lancer la rédaction complète.</p>
             
             <div className="p-4 bg-muted/50 rounded-lg">
               <input 
@@ -225,7 +248,7 @@ export default function CreateEbook() {
                 onClick={handleFullGeneration}
                 className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90"
               >
-                <span>Générer l'ebook complet (Texte + Images + PDF)</span>
+                <span>{bookId ? "Reprendre la génération de l'ebook" : "Générer l'ebook complet"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -236,11 +259,14 @@ export default function CreateEbook() {
           <div className="py-16 flex flex-col items-center justify-center text-center space-y-6">
             <Loader2 className="w-16 h-16 text-primary animate-spin" />
             <div>
-              <h2 className="text-2xl font-bold mb-2">Manus AI est au travail...</h2>
-              <p className="text-muted-foreground max-w-sm mx-auto mt-4">
-                Manus rédige l'intégralité du livre, génère les illustrations et met en page le document final. 
+              <h2 className="text-2xl font-bold mb-2">Génération de l'e-book en cours...</h2>
+              <p className="text-primary font-semibold mt-4 text-lg">
+                {progressMessage}
+              </p>
+              <p className="text-muted-foreground max-w-sm mx-auto mt-4 text-sm">
+                L'IA rédige chaque chapitre, génère les illustrations et met en page le document PDF. 
                 <br/><br/>
-                Cette opération autonome peut prendre plusieurs minutes.
+                Cette opération peut prendre quelques minutes. Ne fermez pas cette page.
               </p>
             </div>
           </div>
@@ -251,9 +277,9 @@ export default function CreateEbook() {
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
               <Check className="w-10 h-10" />
             </div>
-            <h2 className="text-3xl font-bold">Ebook généré par Manus AI !</h2>
+            <h2 className="text-3xl font-bold">Ebook généré avec succès !</h2>
             <p className="text-muted-foreground max-w-md">
-              Votre livre a été entièrement rédigé et illustré de manière autonome.
+              Votre livre a été rédigé de manière autonome par DeepSeek et illustré par l'IA FLUX.
             </p>
             
             {resultData?.pdfUrl && (

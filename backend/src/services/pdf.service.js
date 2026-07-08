@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer');
-const { uploadFile } = require('./supabase.service');
+const { uploadPdfExport } = require('./storage.service');
 
 const markdownToHTML = (md) => {
   if (!md) return '';
@@ -10,7 +10,7 @@ const markdownToHTML = (md) => {
     .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
     .replace(/\*(.*)\*/gim, '<em>$1</em>')
     .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\n\n/gim, '<br><br>')
+    .replace(/\n\n/gim, '<p>$1</p>') // wrap paragraphs nicely
     .replace(/\n/gim, '<br>');
 };
 
@@ -21,60 +21,202 @@ const buildEbookHTML = (book, chapters) => `
   <meta charset="utf-8">
   <title>${book.title}</title>
   <style>
-    @page { margin: 0; }
-    body { font-family: 'Lato', sans-serif; color: #1a1a1a; }
-    .cover { page-break-after: always; display: flex; flex-direction: column;
-             align-items: center; justify-content: center; min-height: 100vh;
-             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
-    .cover h1 { font-family: 'Playfair Display', serif; font-size: 48px;
-                color: white; text-align: center; padding: 40px; }
-    .cover img { max-width: 80%; border-radius: 12px; margin: 20px; }
-    .toc { page-break-after: always; padding: 60px 80px; }
-    .toc h2 { font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 30px; }
-    .toc-item { display: flex; justify-content: space-between; padding: 8px 0;
-                border-bottom: 1px dotted #ccc; font-size: 15px; }
-    .chapter { page-break-before: always; padding: 60px 80px; }
-    .chapter h1 { font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 24px; }
-    .chapter h2 { font-family: 'Playfair Display', serif; font-size: 22px; margin: 24px 0 12px; }
-    .chapter p { line-height: 1.8; margin-bottom: 16px; font-size: 15px; }
-    .chapter img { max-width: 100%; border-radius: 8px; margin: 24px auto; display: block; }
-    .footer { position: fixed; bottom: 10mm; left: 18mm; right: 18mm;
-              display: flex; justify-content: space-between; font-size: 11px; color: #999; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 20mm 20mm 20mm 20mm;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #2D3748;
+      line-height: 1.6;
+      font-size: 15px;
+    }
+    
+    /* Cover Page */
+    .cover {
+      page-break-after: always;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 90vh;
+      text-align: center;
+      font-family: 'Playfair Display', serif;
+      padding: 40px;
+      box-sizing: border-box;
+    }
+    .cover-title {
+      font-size: 40px;
+      font-weight: 700;
+      color: #1A202C;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+    .cover-subtitle {
+      font-size: 18px;
+      color: #718096;
+      margin-bottom: 40px;
+      font-style: italic;
+    }
+    .cover-img {
+      max-width: 80%;
+      height: 380px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      margin-bottom: 40px;
+    }
+    .cover-author {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #4A5568;
+      font-weight: 500;
+    }
+    
+    /* Table of Contents */
+    .toc {
+      page-break-after: always;
+      padding: 40px 20px;
+    }
+    .toc-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      color: #1A202C;
+      margin-bottom: 40px;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 10px;
+    }
+    .toc-list {
+      margin-top: 20px;
+    }
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px dashed #E2E8F0;
+      font-size: 16px;
+    }
+    .toc-item-title {
+      font-weight: 500;
+      color: #2D3748;
+    }
+    .toc-item-page {
+      color: #718096;
+      font-weight: 700;
+    }
+    
+    /* Chapters */
+    .chapter {
+      page-break-before: always;
+      padding: 40px 20px;
+    }
+    .chapter-header {
+      margin-bottom: 40px;
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 20px;
+    }
+    .chapter-number {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #3182CE;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .chapter-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      color: #1A202C;
+      line-height: 1.2;
+    }
+    .chapter-img {
+      width: 100%;
+      max-height: 350px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+    .chapter-body {
+      font-size: 16px;
+      color: #2D3748;
+      line-height: 1.8;
+      text-align: justify;
+    }
+    .chapter-body h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: #2D3748;
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+    .chapter-body h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: #4A5568;
+      margin-top: 30px;
+      margin-bottom: 15px;
+    }
+    .chapter-body p {
+      margin-bottom: 20px;
+    }
+    .chapter-body blockquote {
+      border-left: 4px solid #3182CE;
+      padding: 10px 20px;
+      background-color: #F7FAFC;
+      margin: 20px 0;
+      font-style: italic;
+      color: #4A5568;
+    }
   </style>
 </head>
 <body>
+  <!-- Cover Page -->
   <div class="cover">
-    ${book.coverUrl ? `<img src="${book.coverUrl.startsWith('http') ? book.coverUrl : `http://localhost:${process.env.PORT || 5000}${book.coverUrl}`}" alt="Cover">` : ''}
-    <h1>${book.title}</h1>
+    <h1>EbookAI</h1>
+    ${book.coverUrl ? `<img class="cover-img" src="${book.coverUrl}" alt="Cover Image">` : ''}
+    <div class="cover-title">${book.title}</div>
+    <div class="cover-subtitle">${book.description || ''}</div>
+    <div class="cover-author">Généré par EbookAI</div>
   </div>
   
+  <!-- Table of Contents -->
   <div class="toc">
-    <h2>Sommaire</h2>
-    ${chapters.map((c, i) => `
-      <div class="toc-item">
-        <span>${i + 1}. ${c.title}</span>
-        <span>${i * 3 + 4}</span>
-      </div>
-    `).join('')}
+    <div class="toc-title">Table des Matières</div>
+    <div class="toc-list">
+      ${chapters.map((c, i) => `
+        <div class="toc-item">
+          <span class="toc-item-title">Chapitre ${i + 1} : ${c.title}</span>
+          <span class="toc-item-page">Page ${i * 4 + 3}</span>
+        </div>
+      `).join('')}
+    </div>
   </div>
 
-  ${chapters.map(c => `
+  <!-- Chapters -->
+  ${chapters.map((c, i) => `
     <div class="chapter">
-      <h1>${c.title}</h1>
-      ${c.imageUrl ? `<img src="${c.imageUrl.startsWith('http') ? c.imageUrl : `http://localhost:${process.env.PORT || 5000}${c.imageUrl}`}" alt="Chapter Image">` : ''}
-      <div>${markdownToHTML(c.content)}</div>
+      <div class="chapter-header">
+        <div class="chapter-number">Chapitre ${i + 1}</div>
+        <div class="chapter-title">${c.title}</div>
+      </div>
+      ${c.imageUrl ? `<img class="chapter-img" src="${c.imageUrl}" alt="Illustration Chapitre ${i + 1}">` : ''}
+      <div class="chapter-body">
+        ${markdownToHTML(c.content)}
+      </div>
     </div>
   `).join('')}
-
-  <div class="footer">
-    <span>${book.title}</span>
-    <span><span class="pageNumber"></span></span>
-  </div>
 </body>
 </html>
 `;
 
-const generatePDF = async (book, chapters) => {
+const generatePDF = async (book, chapters, userId) => {
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: 'new'
@@ -89,13 +231,21 @@ const generatePDF = async (book, chapters) => {
   const pdfBuffer = await page.pdf({
     format: 'A4',
     printBackground: true,
-    margin: { top: '20mm', bottom: '20mm', left: '18mm', right: '18mm' }
+    displayHeaderFooter: true,
+    headerTemplate: '<div></div>', // empty header
+    footerTemplate: `
+      <div style="font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-size: 9px; width: 100%; display: flex; justify-content: space-between; padding: 0 20mm; color: #A0AEC0;">
+        <span>${book.title}</span>
+        <span>Page <span class="pageNumber"></span> sur <span class="totalPages"></span></span>
+      </div>
+    `,
+    margin: { top: '25mm', bottom: '25mm', left: '20mm', right: '20mm' }
   });
 
   await browser.close();
 
-  // Upload to Supabase Storage
-  const publicUrl = await uploadFile(pdfBuffer, `pdfs/${filename}`, 'application/pdf');
+  // Upload to Supabase Storage in exports/ folder
+  const publicUrl = await uploadPdfExport(pdfBuffer, userId, filename);
   
   return publicUrl;
 };

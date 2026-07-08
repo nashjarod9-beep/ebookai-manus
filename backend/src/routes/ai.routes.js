@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { generateBookOutline, generateFullBookFromOutline, getAiTaskStatus } = require('../controllers/ai.controller');
+const { generateOutline, generateCover, generateChapter } = require('../controllers/ai.controller');
 const { protect } = require('../middleware/auth.middleware');
 
-router.post('/outline', protect, generateBookOutline);
-router.post('/full-ebook', protect, generateFullBookFromOutline);
-router.get('/task-status/:taskId', protect, getAiTaskStatus);
+router.post('/outline', protect, generateOutline);
+router.post('/cover', protect, generateCover);
+router.post('/chapter', protect, generateChapter);
 
 module.exports = router;

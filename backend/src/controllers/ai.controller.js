@@ -1,84 +1,146 @@
-const { createOutlineTask, createFullEbookTask, getTaskStatusAndResult } = require('../services/manus.service');
+const { generateBookOutline, generateChapterContent } = require('../services/ai.service');
+const { generateImage } = require('../services/flux.service');
+const { downloadImageToBuffer, uploadCoverImage, uploadChapterImage } = require('../services/storage.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const generateBookOutline = async (req, res, next) => {
+const generateOutline = async (req, res, next) => {
   try {
     const ebookData = req.body;
-    const taskId = await createOutlineTask(ebookData);
-    res.json({ taskId });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const generateFullBookFromOutline = async (req, res, next) => {
-  try {
-    const { outline, ebookData, bookId } = req.body;
+    // ebookData includes: title, theme, objective, audience, tone, length, language
+    const { outline, modelUsed } = await generateBookOutline(ebookData);
     
-    // Check ownership
-    if (bookId) {
-      const book = await prisma.book.findUnique({ where: { id: bookId } });
-      if (!book || book.userId !== req.user.id) {
-        return res.status(401).json({ message: 'Non autorisé' });
-      }
-    }
-
-    const taskId = await createFullEbookTask(outline, ebookData);
-    res.json({ taskId });
+    res.json({
+      ...outline,
+      modelUsed
+    });
   } catch (error) {
     next(error);
   }
 };
 
-const getAiTaskStatus = async (req, res, next) => {
+const generateCover = async (req, res, next) => {
   try {
-    const { taskId } = req.params;
-    const { bookId } = req.query;
+    const { bookId, coverImagePrompt } = req.body;
 
-    const statusData = await getTaskStatusAndResult(taskId);
+    if (!bookId || !coverImagePrompt) {
+      return res.status(400).json({ message: 'bookId et coverImagePrompt sont requis.' });
+    }
 
-    // If it's completed and we have a bookId, save the results to the DB
-    if (statusData.status === 'completed' && bookId && statusData.result) {
-      const fullEbookResult = statusData.result;
-      
-      const updateData = { status: 'ready' };
-      if (fullEbookResult.coverUrl) {
-        updateData.coverUrl = fullEbookResult.coverUrl;
-      }
-      
-      await prisma.book.update({
-        where: { id: bookId },
-        data: updateData
-      });
+    // Check ownership
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book || book.userId !== req.user.id) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
 
-      if (fullEbookResult.chapters && Array.isArray(fullEbookResult.chapters)) {
-        // First delete any existing chapters to avoid duplicates
-        await prisma.chapter.deleteMany({ where: { bookId } });
-        
-        for (let i = 0; i < fullEbookResult.chapters.length; i++) {
-          const ch = fullEbookResult.chapters[i];
-          await prisma.chapter.create({
-            data: {
-              bookId,
-              title: ch.title,
-              content: ch.content || '',
-              order: i + 1,
-              imageUrl: ch.imageUrl
-            }
-          });
-        }
+    console.log(`Génération de la couverture pour le livre ${bookId}...`);
+    // Generate image via FLUX (cover aspect ratio 3:4)
+    const fluxUrl = await generateImage(coverImagePrompt, 768, 1024);
+    
+    // Download image from FLUX temporary URL and upload to Supabase Storage
+    const imageBuffer = await downloadImageToBuffer(fluxUrl);
+    const filename = `cover_${bookId}_${Date.now()}.png`;
+    const publicCoverUrl = await uploadCoverImage(imageBuffer, req.user.id, filename);
+
+    // Save cover URL and model used in Book
+    await prisma.book.update({
+      where: { id: bookId },
+      data: { coverUrl: publicCoverUrl }
+    });
+
+    res.json({ coverUrl: publicCoverUrl });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const generateChapter = async (req, res, next) => {
+  try {
+    const { bookId, chapterData, ebookData } = req.body;
+    
+    if (!bookId || !chapterData || !ebookData) {
+      return res.status(400).json({ message: 'bookId, chapterData et ebookData sont requis.' });
+    }
+
+    const { order, title, summary, imagePrompt } = chapterData;
+
+    // Check ownership
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book || book.userId !== req.user.id) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+
+    // RESILIENCE / REPRISE SUR ERREUR : Check if this chapter is already generated
+    const existingChapter = await prisma.chapter.findFirst({
+      where: { bookId, order: parseInt(order) }
+    });
+
+    if (existingChapter && existingChapter.content && existingChapter.content.length > 200) {
+      console.log(`[Reprise sur erreur] Le chapitre ${order} existe déjà. Renvoi des données locales.`);
+      return res.json(existingChapter);
+    }
+
+    console.log(`Génération du contenu textuel pour le chapitre ${order} : "${title}"...`);
+    // 1. Generate text via DeepSeek (or Qwen fallback)
+    const { content, modelUsed } = await generateChapterContent(chapterData, ebookData);
+
+    console.log(`Génération de l'illustration pour le chapitre ${order} : "${imagePrompt.substring(0, 40)}..."`);
+    // 2. Generate chapter illustration via FLUX (aspect ratio 4:3)
+    let publicImageUrl = null;
+    if (imagePrompt) {
+      try {
+        const fluxUrl = await generateImage(imagePrompt, 1024, 768);
+        const imageBuffer = await downloadImageToBuffer(fluxUrl);
+        const filename = `chapter_${bookId}_${order}_${Date.now()}.png`;
+        publicImageUrl = await uploadChapterImage(imageBuffer, req.user.id, filename);
+      } catch (imgError) {
+        console.error(`Erreur de génération d'image pour le chapitre ${order}, continuation sans image:`, imgError.message);
       }
     }
 
-    res.json(statusData);
+    // 3. Save chapter to database (upsert to overwrite if it was a partial/empty draft)
+    let savedChapter;
+    if (existingChapter) {
+      savedChapter = await prisma.chapter.update({
+        where: { id: existingChapter.id },
+        data: {
+          title,
+          content,
+          imageUrl: publicImageUrl || existingChapter.imageUrl,
+          imagePrompt,
+          modelUsed
+        }
+      });
+    } else {
+      savedChapter = await prisma.chapter.create({
+        data: {
+          bookId,
+          title,
+          content,
+          order: parseInt(order),
+          imageUrl: publicImageUrl,
+          imagePrompt,
+          modelUsed
+        }
+      });
+    }
+
+    // If it is the last chapter, update the book status to 'ready'
+    // Wait, the client will manage the status or we can update it in the PDF step.
+    // Let's make sure the status is set to 'generating' while processing.
+    await prisma.book.update({
+      where: { id: bookId },
+      data: { status: 'generating' }
+    });
+
+    res.json(savedChapter);
   } catch (error) {
     next(error);
   }
 };
 
 module.exports = {
-  generateBookOutline,
-  generateFullBookFromOutline,
-  getAiTaskStatus
+  generateOutline,
+  generateCover,
+  generateChapter
 };

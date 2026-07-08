@@ -32,6 +32,7 @@ model Book {
   outline      String?   // JSON stringified
   pdfPath      String?
   zipPath      String?
+  modelUsed    String?     // Model used for outline (deepseek-chat or qwen-plus)
   chapters     Chapter[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -49,5 +50,6 @@ model Chapter {
   quizzes     String?  // JSON stringified: [{question, options[], correctIndex}]
   videoUrl    String?
   audioPath   String?
+  modelUsed   String?  // Model used for this chapter
   createdAt   DateTime @default(now())
 }

@@ -16,7 +16,7 @@ const exportToPdf = async (req, res, next) => {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
-    const pdfPath = await generatePDF(book, book.chapters);
+    const pdfPath = await generatePDF(book, book.chapters, req.user.id);
     
     // Save path to DB
     await prisma.book.update({
@@ -43,7 +43,7 @@ const exportToZip = async (req, res, next) => {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
-    const zipPath = await generateZip(book, book.chapters);
+    const zipPath = await generateZip(book, book.chapters, req.user.id);
     
     // Save path to DB
     await prisma.book.update({
