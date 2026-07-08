@@ -29,14 +29,16 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Create upload directories if they don't exist
-const dirs = ['uploads/images', 'uploads/pdfs', 'uploads/audios', 'uploads/exports'];
-dirs.forEach(dir => {
-  const dirPath = path.join(__dirname, '..', dir);
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-});
+// Create upload directories if they don't exist (dev only)
+if (process.env.NODE_ENV !== 'production') {
+  const dirs = ['uploads/images', 'uploads/pdfs', 'uploads/audios', 'uploads/exports'];
+  dirs.forEach(dir => {
+    const dirPath = path.join(__dirname, '..', dir);
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  });
+}
 
 // Static files
 // Vercel Serverless doesn't need to serve local /uploads anymore since we use Supabase
