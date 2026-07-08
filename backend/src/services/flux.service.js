@@ -13,7 +13,7 @@ const generateImage = async (prompt, width = 1024, height = 768) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey
+        'x-key': apiKey
       },
       body: JSON.stringify({
         prompt: prompt,
@@ -46,7 +46,7 @@ const generateImage = async (prompt, width = 1024, height = 768) => {
       const pollResponse = await fetch(`https://api.bfl.ai/v1/get_result?id=${taskId}`, {
         method: 'GET',
         headers: {
-          'x-api-key': apiKey
+          'x-key': apiKey
         }
       });
 
