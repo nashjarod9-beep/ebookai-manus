@@ -23,7 +23,7 @@ const getEbookById = async (req, res, next) => {
       return res.status(404).json({ message: 'Livre introuvable' });
     }
     if (book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
     res.json(book);
   } catch (error) {
@@ -82,7 +82,7 @@ const updateEbook = async (req, res, next) => {
     // Check ownership
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const updatedBook = await prisma.book.update({
@@ -100,7 +100,7 @@ const deleteEbook = async (req, res, next) => {
     const bookId = req.params.id;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     await prisma.book.delete({ where: { id: bookId } });
@@ -119,7 +119,7 @@ const duplicateEbook = async (req, res, next) => {
     });
 
     if (!srcBook || srcBook.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     // Create duplicated book

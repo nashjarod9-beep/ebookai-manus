@@ -8,7 +8,7 @@ const createChapter = async (req, res, next) => {
     // Check book ownership
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const chapter = await prisma.chapter.create({
@@ -39,7 +39,7 @@ const updateChapter = async (req, res, next) => {
     });
     
     if (!chapter || chapter.book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     if (updateData.quizzes && typeof updateData.quizzes === 'object') {
@@ -66,7 +66,7 @@ const deleteChapter = async (req, res, next) => {
     });
     
     if (!chapter || chapter.book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     await prisma.chapter.delete({ where: { id: chapterId } });

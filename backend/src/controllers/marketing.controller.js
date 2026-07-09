@@ -59,7 +59,7 @@ const getMarketingAssets = async (req, res, next) => {
     const { bookId } = req.params;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const asset = await prisma.marketingAsset.findUnique({ where: { bookId } });
@@ -75,7 +75,7 @@ const generateProductSheet = async (req, res, next) => {
     const book = await prisma.book.findUnique({ where: { id: bookId }, include: { chapters: true } });
     
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const prompt = `
@@ -146,7 +146,7 @@ const updateProductSheet = async (req, res, next) => {
     const { bookId, productSheet } = req.body;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     JSON.parse(productSheet);
@@ -168,7 +168,7 @@ const exportProductSheetPdf = async (req, res, next) => {
     const { bookId } = req.params;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const asset = await prisma.marketingAsset.findUnique({ where: { bookId } });
@@ -385,7 +385,7 @@ const generateTikTokScripts = async (req, res, next) => {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const prompt = `
@@ -436,7 +436,7 @@ const generateWhatsAppMessages = async (req, res, next) => {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const prompt = `
@@ -483,7 +483,7 @@ const updateSocialMarketing = async (req, res, next) => {
     const { bookId, tiktokScripts, whatsappMsgs } = req.body;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     if (tiktokScripts) JSON.parse(tiktokScripts);
@@ -511,7 +511,7 @@ const generateMockupVariant = async (req, res, next) => {
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
-      return res.status(401).json({ message: 'Non autorisé' });
+      return res.status(403).json({ message: 'Accès refusé' });
     }
 
     const varId = parseInt(variantId);

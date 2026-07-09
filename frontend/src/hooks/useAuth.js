@@ -22,8 +22,10 @@ export function useAuth() {
           data.plan = 'agency';
           data.quotaRemaining = 9999;
         }
-        localStorage.setItem('user', JSON.stringify(data));
-        setUser(data);
+        const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        const updated = { ...savedUser, ...data };
+        localStorage.setItem('user', JSON.stringify(updated));
+        setUser(updated);
       } catch (e) {
         console.error("Error refreshing profile:", e);
       }
