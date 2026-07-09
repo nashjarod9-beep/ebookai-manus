@@ -26,7 +26,12 @@ const exportToPdf = async (req, res, next) => {
 
     res.json({ pdfPath });
   } catch (error) {
-    next(error);
+    console.error("Export PDF error details:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la génération du PDF", 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 };
 

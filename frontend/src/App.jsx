@@ -26,6 +26,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/create" element={<PrivateRoute><CreateEbook /></PrivateRoute>} />
+            <Route path="/create/:draftId" element={<PrivateRoute><CreateEbook /></PrivateRoute>} />
             <Route path="/editor/:id" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
             <Route path="/preview/:id" element={<PrivateRoute><PreviewPage /></PrivateRoute>} />
           </Routes>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCreateEbook } from '../hooks/useEbook';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useCreateEbook, useEbook } from '../hooks/useEbook';
 import { useAI } from '../hooks/useAI';
 import api from '../lib/axios';
 import { Loader2, ArrowRight, Check, Sparkles } from 'lucide-react';
@@ -22,8 +22,35 @@ export default function CreateEbook() {
   const [resultData, setResultData] = useState(null);
 
   const navigate = useNavigate();
+  const { draftId } = useParams();
+  
   const createEbook = useCreateEbook();
+  const { data: draftBook } = useEbook(draftId);
   const { generateOutline, generateCover, generateChapter } = useAI();
+
+  // Load draft details if draftId is present
+  useEffect(() => {
+    if (draftBook) {
+      setBookId(draftBook.id);
+      if (draftBook.outline) {
+        try {
+          const parsed = JSON.parse(draftBook.outline);
+          setOutline(parsed);
+          setStep(2);
+        } catch (e) {
+          console.error("Error parsing draft outline:", e);
+        }
+      }
+      setFormData({
+        theme: draftBook.subject || '',
+        objective: draftBook.description || '',
+        audience: '',
+        tone: 'Professionnel',
+        length: 'Court (environ 5 chapitres)',
+        language: draftBook.language || 'fr'
+      });
+    }
+  }, [draftBook]);
 
   const handleOutlineGeneration = async () => {
     setIsGenerating(true);
@@ -53,7 +80,8 @@ export default function CreateEbook() {
           subject: formData.theme,
           description: outline.description,
           language: formData.language,
-          format: 'static'
+          format: 'static',
+          outline: JSON.stringify(outline) // Pass the outline JSON string!
         });
         currentBookId = book.id;
         setBookId(book.id);
@@ -80,7 +108,9 @@ export default function CreateEbook() {
       setStep(4);
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la génération de l'ebook. Vous pourrez reprendre la génération là où elle a échoué.");
+      // Read response error if available
+      const errMsg = error.response?.data?.error || error.response?.data?.message || error.message;
+      alert(`Erreur lors de la génération : ${errMsg}. Vous pourrez reprendre la génération là où elle a échoué.`);
       setStep(2); // Go back to allow retrying
     } finally {
       setIsGenerating(false);

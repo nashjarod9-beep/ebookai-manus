@@ -75,3 +75,16 @@ export function useUpdateChapter() {
     }
   });
 }
+
+export function useDeleteEbook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id) => {
+      const { data } = await api.delete(`/ebooks/${id}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ebooks'] });
+    }
+  });
+}
