@@ -260,191 +260,80 @@ export default function EditorPage() {
               </div>
             )
           ) : (
-            // Marketing Assets Manager
-            <div className="flex-1 flex overflow-hidden">
+            // Marketing Assets Hub
+            <div className="flex-1 flex flex-col items-center justify-center p-8 bg-muted/5">
               {user?.plan === 'free' && user?.email !== 'nashjarod9@gmail.com' ? (
                 // Locked screen for free users
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto space-y-6">
-                  <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">
+                <div className="max-w-md w-full text-center space-y-6 bg-card border p-8 rounded-2xl shadow-xl">
+                  <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
                     <Lock className="w-8 h-8" />
                   </div>
                   <div className="space-y-2">
                     <h2 className="text-2xl font-bold">Outils Marketing Verrouillés</h2>
-                    <p className="text-muted-foreground text-sm">
-                      La fiche produit, les scripts TikTok publicitaires, les templates WhatsApp et les mockups FLUX en haute définition sont réservés aux abonnés payants.
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      La fiche produit, les scripts TikTok publicitaires, les templates WhatsApp et les mockups FLUX en haute définition sont réservés aux abonnés premium.
                     </p>
                   </div>
                   <button 
                     onClick={() => navigate('/pricing')}
-                    className="bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90"
+                    className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-semibold hover:bg-primary/90"
                   >
                     Passer à une offre payante
                   </button>
                 </div>
               ) : (
-                // Marketing Assets display
-                <div className="flex-1 p-8 overflow-y-auto">
-                  {loadingMarketing ? (
-                    <div className="h-full flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    </div>
-                  ) : (
-                    <div className="max-w-3xl mx-auto space-y-6">
-                      
-                      {/* Product Sheet Field */}
-                      {activeMarketingField === 'sheet' && (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">Fiche Produit Markdown</h2>
-                            {marketingAsset?.productSheet && (
-                              <button 
-                                onClick={() => handleGenerateMarketing('sheet')}
-                                className="text-xs text-primary hover:underline font-semibold"
-                              >
-                                Régénérer
-                              </button>
-                            )}
-                          </div>
-                          
-                          {marketingAsset?.productSheet ? (
-                            <div className="p-6 border rounded-xl bg-card prose prose-slate max-w-none">
-                              <ReactMarkdown>{marketingAsset.productSheet}</ReactMarkdown>
-                            </div>
-                          ) : (
-                            <div className="p-8 border border-dashed rounded-xl text-center space-y-4">
-                              <p className="text-muted-foreground text-sm">Générez une fiche de vente persuasive pour votre ebook.</p>
-                              <button 
-                                onClick={() => handleGenerateMarketing('sheet')}
-                                disabled={generatingAsset === 'sheet'}
-                                className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
-                              >
-                                {generatingAsset === 'sheet' ? 'Génération...' : 'Générer la fiche produit'}
-                              </button>
-                            </div>
-                          )}
+                // Marketing Hub for upgraded users
+                <div className="max-w-md w-full text-center space-y-6 bg-card border p-8 rounded-2xl shadow-xl">
+                  <div className="w-16 h-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto">
+                    <Sparkles className="w-8 h-8 text-amber-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-bold">Outils Marketing EbookAI</h2>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Accédez aux outils avancés pour promouvoir et vendre votre ebook comme un professionnel.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3 pt-2">
+                    <button 
+                      onClick={() => navigate(`/product-sheet/${id}`)}
+                      className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted transition-colors text-left w-full bg-background"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-primary shrink-0" />
+                        <div>
+                          <div className="text-sm font-semibold">Fiche de vente AIDA</div>
+                          <div className="text-xs text-muted-foreground">Copywriting persuasif optimisé</div>
                         </div>
-                      )}
+                      </div>
+                    </button>
 
-                      {/* Mockup Field */}
-                      {activeMarketingField === 'mockup' && (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">Mockup Publicitaire 3D</h2>
-                            {marketingAsset?.mockupUrl && (
-                              <button 
-                                onClick={() => handleGenerateMarketing('mockup')}
-                                className="text-xs text-primary hover:underline font-semibold"
-                              >
-                                Régénérer
-                              </button>
-                            )}
-                          </div>
-                          
-                          {marketingAsset?.mockupUrl ? (
-                            <div className="p-4 border rounded-xl bg-card flex flex-col items-center">
-                              <img 
-                                src={getFullUrl(marketingAsset.mockupUrl)} 
-                                alt="Marketing Mockup" 
-                                className="max-w-md w-full h-auto rounded-lg shadow-md object-cover aspect-square" 
-                              />
-                            </div>
-                          ) : (
-                            <div className="p-8 border border-dashed rounded-xl text-center space-y-4">
-                              <p className="text-muted-foreground text-sm">Générez un visuel 3D carré (1080x1080) sur smartphone pour vos publicités.</p>
-                              <button 
-                                onClick={() => handleGenerateMarketing('mockup')}
-                                disabled={generatingAsset === 'mockup'}
-                                className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
-                              >
-                                {generatingAsset === 'mockup' ? 'Génération...' : 'Générer le mockup 1080x1080'}
-                              </button>
-                            </div>
-                          )}
+                    <button 
+                      onClick={() => navigate(`/marketing/visuals/${id}`)}
+                      className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted transition-colors text-left w-full bg-background"
+                    >
+                      <div className="flex items-center gap-3">
+                        <ImageIcon className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <div>
+                          <div className="text-sm font-semibold">Visuels & Mockups 3D</div>
+                          <div className="text-xs text-muted-foreground">Illustration premium 1080x1080</div>
                         </div>
-                      )}
+                      </div>
+                    </button>
 
-                      {/* TikTok scripts */}
-                      {activeMarketingField === 'tiktok' && (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">10 Scripts TikTok / Reels</h2>
-                            {marketingAsset?.tiktokScripts && (
-                              <button 
-                                onClick={() => handleGenerateMarketing('tiktok')}
-                                className="text-xs text-primary hover:underline font-semibold"
-                              >
-                                Régénérer
-                              </button>
-                            )}
-                          </div>
-                          
-                          {marketingAsset?.tiktokScripts ? (
-                            <div className="grid grid-cols-1 gap-4">
-                              {JSON.parse(marketingAsset.tiktokScripts).map((sc) => (
-                                <div key={sc.id} className="p-5 border rounded-xl bg-card space-y-2">
-                                  <div className="text-xs font-bold text-primary">Script {sc.id}</div>
-                                  <p className="text-sm font-semibold">🎬 Accroche : "{sc.hook}"</p>
-                                  <p className="text-sm text-muted-foreground">💬 Contenu : {sc.body}</p>
-                                  <p className="text-sm italic text-amber-600 font-medium">📣 CTA : {sc.cta}</p>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="p-8 border border-dashed rounded-xl text-center space-y-4">
-                              <p className="text-muted-foreground text-sm">Rédigez 10 scripts à fort taux d'engagement pour faire décoller vos ventes.</p>
-                              <button 
-                                onClick={() => handleGenerateMarketing('tiktok')}
-                                disabled={generatingAsset === 'tiktok'}
-                                className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
-                              >
-                                {generatingAsset === 'tiktok' ? 'Génération...' : 'Générer 10 scripts TikTok'}
-                              </button>
-                            </div>
-                          )}
+                    <button 
+                      onClick={() => navigate(`/marketing/content/${id}`)}
+                      className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted transition-colors text-left w-full bg-background"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Video className="w-5 h-5 text-purple-500 shrink-0" />
+                        <div>
+                          <div className="text-sm font-semibold">Scripts & Messages</div>
+                          <div className="text-xs text-muted-foreground">10 TikToks & 5 WhatsApps</div>
                         </div>
-                      )}
-
-                      {/* WhatsApp messages */}
-                      {activeMarketingField === 'whatsapp' && (
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <h2 className="text-2xl font-bold">5 Messages WhatsApp</h2>
-                            {marketingAsset?.whatsappMsgs && (
-                              <button 
-                                onClick={() => handleGenerateMarketing('whatsapp')}
-                                className="text-xs text-primary hover:underline font-semibold"
-                              >
-                                Régénérer
-                              </button>
-                            )}
-                          </div>
-                          
-                          {marketingAsset?.whatsappMsgs ? (
-                            <div className="space-y-4">
-                              {JSON.parse(marketingAsset.whatsappMsgs).map((msg, idx) => (
-                                <div key={idx} className="p-5 border rounded-xl bg-card space-y-2 whitespace-pre-line text-sm relative">
-                                  <div className="text-xs font-bold text-primary border-b pb-1 mb-2">Message {idx + 1}</div>
-                                  {msg}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <div className="p-8 border border-dashed rounded-xl text-center space-y-4">
-                              <p className="text-muted-foreground text-sm">Générez 5 messages de prospection prêts à être copiés-collés.</p>
-                              <button 
-                                onClick={() => handleGenerateMarketing('whatsapp')}
-                                disabled={generatingAsset === 'whatsapp'}
-                                className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
-                              >
-                                {generatingAsset === 'whatsapp' ? 'Génération...' : 'Générer 5 messages WhatsApp'}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                    </div>
-                  )}
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
