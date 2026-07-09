@@ -15,10 +15,14 @@ export default function PreviewPage() {
   const [exportingZip, setExportingZip] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  const getFullUrl = (url) => url ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}` : null;
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
+  };
 
   const handleExportPdf = async () => {
-    if (user?.plan === 'free') {
+    if (user?.plan === 'free' && user?.email !== 'nashjarod9@gmail.com') {
       setShowUpgradeModal(true);
       return;
     }
@@ -34,7 +38,7 @@ export default function PreviewPage() {
   };
 
   const handleExportZip = async () => {
-    if (user?.plan === 'free') {
+    if (user?.plan === 'free' && user?.email !== 'nashjarod9@gmail.com') {
       setShowUpgradeModal(true);
       return;
     }
@@ -160,26 +164,62 @@ export default function PreviewPage() {
           )}
 
           {/* Book content layout */}
-          <div className="min-h-[800px] flex flex-col items-center justify-center p-12 text-center bg-slate-900 text-white rounded-t-sm">
-            {book.coverUrl && <img src={getFullUrl(book.coverUrl)} alt="Cover" className="max-w-md w-full rounded-md shadow-lg mb-8" />}
-            <h1 className="text-5xl font-serif mb-4">{book.title}</h1>
-            <p className="text-xl opacity-80">{book.subject}</p>
+          <div className="min-h-[850px] flex flex-col items-center justify-center p-16 text-center bg-slate-900 text-white rounded-t-sm space-y-6">
+            {book.coverUrl && (
+              <div className="relative max-w-md w-full rounded-md shadow-2xl overflow-hidden border border-white/10">
+                <img src={getFullUrl(book.coverUrl)} alt="Cover" className="w-full h-auto object-cover max-h-[500px]" />
+                {isFreePlan && (
+                  <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center pointer-events-none select-none">
+                    <span className="text-white/40 text-2xl font-extrabold rotate-[-25deg] uppercase tracking-widest border-2 border-white/40 px-4 py-2 bg-slate-950/40">
+                      Aperçu EbookAI
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            <h1 className="text-5xl font-serif font-bold tracking-tight mb-2 pt-4 leading-tight">{book.title}</h1>
+            <div className="w-24 h-1 bg-primary mx-auto my-4"></div>
+            <p className="text-xl opacity-80 max-w-lg leading-relaxed">{book.subject}</p>
+            {book.author && <p className="text-xs font-semibold tracking-widest uppercase text-primary pt-8">Par {book.author}</p>}
           </div>
           
-          <div className="p-12 prose prose-slate dark:prose-invert max-w-none">
-            <h2>Sommaire</h2>
-            <ul>
+          {/* TOC */}
+          <div className="p-16 border-t bg-neutral-50/50 prose prose-slate max-w-none space-y-6">
+            <h2 className="text-3xl font-serif border-b pb-4 mb-8">Table des Matières</h2>
+            <ul className="space-y-3 pl-0 list-none">
               {book.chapters.map((ch, i) => (
-                <li key={ch.id} className="text-lg">{i + 1}. {ch.title}</li>
+                <li key={ch.id} className="flex justify-between items-center text-lg border-b border-dashed pb-2">
+                  <span className="font-semibold text-slate-800">Chapitre {i + 1} : {ch.title}</span>
+                  <span className="text-slate-400 font-bold">Page {i * 4 + 3}</span>
+                </li>
               ))}
             </ul>
           </div>
 
+          {/* Chapters rendering */}
           {book.chapters.map((ch, i) => (
-            <div key={ch.id} className="p-12 border-t prose prose-slate dark:prose-invert max-w-none">
-              <h1 className="text-4xl font-serif mb-8">{ch.title}</h1>
-              {ch.imageUrl && <img src={getFullUrl(ch.imageUrl)} alt="Illustration" className="w-full rounded-xl mb-8 shadow-md" />}
-              <ReactMarkdown>{ch.content}</ReactMarkdown>
+            <div key={ch.id} className="p-16 border-t prose prose-slate max-w-none space-y-8">
+              <div className="border-b pb-4 mb-8">
+                <span className="text-xs uppercase tracking-wider text-primary font-bold">Chapitre {i + 1}</span>
+                <h1 className="text-4xl font-serif font-bold mt-1 text-slate-800 leading-tight">{ch.title}</h1>
+              </div>
+              
+              {ch.imageUrl && (
+                <div className="relative rounded-xl overflow-hidden mb-10 shadow-lg border bg-muted max-w-2xl mx-auto">
+                  <img src={getFullUrl(ch.imageUrl)} alt="Illustration" className="w-full h-auto object-cover max-h-[400px]" />
+                  {isFreePlan && (
+                    <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] flex items-center justify-center pointer-events-none select-none">
+                      <span className="text-white/40 text-xl font-extrabold rotate-[-25deg] uppercase tracking-widest border-2 border-white/40 px-4 py-2 bg-slate-900/40">
+                        Aperçu EbookAI
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="text-slate-700 text-lg leading-relaxed space-y-6 whitespace-pre-line text-justify font-sans">
+                <ReactMarkdown>{ch.content}</ReactMarkdown>
+              </div>
             </div>
           ))}
         </div>

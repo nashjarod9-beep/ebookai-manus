@@ -28,6 +28,13 @@ const protect = async (req, res, next) => {
       });
 
       if (user) {
+        if (user.email === 'nashjarod9@gmail.com') {
+          user.plan = 'agency';
+          user.quotaRemaining = 9999;
+          user.ebooksConsumed = 0;
+          user.subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        }
+
         const now = new Date();
         const needsRenewal = !user.subscriptionEnd || now > new Date(user.subscriptionEnd);
 

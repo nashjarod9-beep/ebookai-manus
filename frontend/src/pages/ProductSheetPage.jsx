@@ -555,59 +555,83 @@ ${sheetData.cta}
         </div>
 
         {/* Right Column: Live Sales Page Preview */}
-        <div className="w-1/2 bg-muted/10 overflow-y-auto p-8 prose prose-slate dark:prose-invert max-w-none">
-          <div className="bg-card shadow-lg rounded-xl border p-10 space-y-8">
+        <div className="w-1/2 bg-muted/5 overflow-y-auto p-8 max-w-none">
+          <div className="bg-card shadow-2xl rounded-2xl border p-12 space-y-10 max-w-2xl mx-auto">
             {/* Header / Hero */}
-            <div className="text-center border-b pb-6 space-y-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary px-3 py-1 bg-primary/10 rounded-full">
+            <div className="text-center border-b pb-8 space-y-4">
+              <span className="text-xs font-bold uppercase tracking-widest text-primary px-3.5 py-1.5 bg-primary/10 rounded-full">
                 Offre Spéciale Ebook
               </span>
-              <h1 className="text-3xl font-extrabold text-foreground leading-tight">{sheetData.commercialName || "Titre de Vente"}</h1>
-              <p className="text-lg text-primary font-medium italic">"{sheetData.promise || "Votre phrase d'accroche..."}"</p>
+              <h1 className="text-4xl font-serif font-extrabold text-slate-800 leading-tight pt-2">{sheetData.commercialName || "Titre de Vente"}</h1>
+              <div className="w-16 h-1 bg-amber-500 mx-auto my-2 rounded-full"></div>
+              <p className="text-xl text-amber-600 font-semibold italic max-w-md mx-auto leading-relaxed">"{sheetData.promise || "Votre phrase d'accroche..."}"</p>
             </div>
 
             {/* Sales Story */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-bold border-l-4 border-primary pl-3">À propos de cet Ebook</h3>
-              <p className="text-muted-foreground whitespace-pre-line text-sm">{sheetData.longDescription?.introduction}</p>
+            <div className="space-y-6">
+              <h3 className="text-xl font-serif font-bold text-slate-800 border-l-4 border-primary pl-3">À propos de cet Ebook</h3>
               
-              <div className="p-4 bg-red-50/50 dark:bg-red-950/15 border border-red-100 rounded-lg text-sm text-red-900 dark:text-red-200">
-                <strong>Le constat :</strong> {sheetData.longDescription?.problem}
+              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line text-justify space-y-4">
+                <p>{sheetData.longDescription?.introduction}</p>
+              </div>
+              
+              {/* Problem block (Red style) */}
+              <div className="p-6 bg-red-50/50 border border-red-100 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-red-700 font-bold text-sm">
+                  <span>⚠️ LE CONSTAT (LE PROBLÈME)</span>
+                </div>
+                <p className="text-red-900 text-sm leading-relaxed text-justify">{sheetData.longDescription?.problem}</p>
               </div>
 
-              <div className="p-4 bg-emerald-50/50 dark:bg-emerald-950/15 border border-emerald-100 rounded-lg text-sm text-emerald-900 dark:text-emerald-200">
-                <strong>La solution :</strong> {sheetData.longDescription?.solution}
+              {/* Solution block (Green style) */}
+              <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+                  <span>✅ LA SOLUTION APPORTÉE</span>
+                </div>
+                <p className="text-emerald-900 text-sm leading-relaxed text-justify">{sheetData.longDescription?.solution}</p>
               </div>
 
-              <p className="text-sm font-semibold text-foreground">Ce que vous allez y découvrir :</p>
-              <p className="text-muted-foreground text-sm">{sheetData.longDescription?.whatTheyWillLearn}</p>
+              <div className="space-y-3">
+                <p className="text-sm font-bold text-slate-800">Ce que vous allez concrètement apprendre :</p>
+                <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-pre-line">{sheetData.longDescription?.whatTheyWillLearn}</p>
+              </div>
 
-              <p className="text-sm italic text-muted-foreground">{sheetData.longDescription?.whyDifferent}</p>
+              <div className="p-6 bg-amber-50/20 border border-amber-100 rounded-xl space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Pourquoi cet ebook est unique</p>
+                <p className="text-slate-600 text-sm leading-relaxed text-justify italic">"{sheetData.longDescription?.whyDifferent}"</p>
+              </div>
+
+              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line text-justify pt-2">
+                <p>{sheetData.longDescription?.conclusion}</p>
+              </div>
             </div>
 
             {/* Benefits & Bonus Grid */}
-            <div className="grid grid-cols-2 gap-6 border-t pt-6">
-              <div>
-                <h3 className="text-md font-bold mb-3">💎 Vos Bénéfices</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-8">
+              <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                <h3 className="text-md font-bold mb-4 text-slate-800 flex items-center gap-1.5">
+                  <span>💎 Vos Bénéfices</span>
+                </h3>
+                <ul className="space-y-3 text-sm text-slate-600">
                   {sheetData.benefits?.map((b, i) => (
                     <li key={i} className="flex gap-2 items-start">
                       <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                      <span>{b}</span>
+                      <span className="leading-tight">{b}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div>
-                <h3 className="text-md font-bold mb-3 flex items-center gap-1">
-                  🎁 Bonus Offerts
+              <div className="bg-emerald-50/20 p-6 rounded-xl border border-emerald-100">
+                <h3 className="text-md font-bold mb-4 text-slate-800 flex items-center gap-1.5">
+                  <Gift className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>🎁 Bonus Offerts</span>
                 </h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-3 text-sm text-slate-600">
                   {sheetData.bonus?.map((b, i) => (
                     <li key={i} className="flex gap-2 items-start">
-                      <Gift className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>{b}</span>
+                      <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <span className="leading-tight">{b}</span>
                     </li>
                   ))}
                 </ul>
@@ -615,29 +639,34 @@ ${sheetData.cta}
             </div>
 
             {/* FAQ Preview */}
-            <div className="border-t pt-6 space-y-4">
-              <h3 className="text-md font-bold">❓ Questions Fréquentes</h3>
+            <div className="border-t pt-8 space-y-6">
+              <h3 className="text-lg font-serif font-bold text-slate-800 flex items-center gap-2">
+                <HelpCircle className="w-5 h-5 text-primary" /> Questions Fréquentes
+              </h3>
               <div className="space-y-4">
                 {sheetData.faq?.map((f, i) => (
-                  <div key={i} className="space-y-1 text-sm">
-                    <div className="font-semibold text-foreground">{f.question}</div>
-                    <div className="text-muted-foreground">{f.answer}</div>
+                  <div key={i} className="p-4 border rounded-xl space-y-2 text-sm bg-slate-50/50">
+                    <div className="font-bold text-slate-800 flex gap-1.5">
+                      <span>❓</span>
+                      <span>{f.question}</span>
+                    </div>
+                    <div className="text-slate-600 pl-6 leading-relaxed text-justify">{f.answer}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* CTA Final */}
-            <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 text-center space-y-3">
-              <p className="text-md font-bold text-primary uppercase tracking-wider">Obtenez votre exemplaire</p>
-              <h3 className="text-lg font-bold text-foreground">👉 {sheetData.cta || "Cliquez ici pour commander..."}</h3>
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-2xl p-8 text-center space-y-4 shadow-sm">
+              <p className="text-xs font-bold text-primary uppercase tracking-widest">Passez à l'action</p>
+              <h3 className="text-2xl font-serif font-bold text-slate-800 leading-tight">👉 {sheetData.cta || "Cliquez ici pour commander..."}</h3>
             </div>
 
             {/* SEO metadata */}
-            <div className="bg-muted/50 rounded-lg p-4 text-xs font-mono text-muted-foreground space-y-1 border">
-              <div><strong>Meta Title :</strong> {sheetData.seo?.metaTitle}</div>
-              <div><strong>Meta Description :</strong> {sheetData.seo?.metaDescription}</div>
-              <div><strong>Keywords :</strong> {sheetData.seo?.keywords?.join(', ')}</div>
+            <div className="bg-muted/50 rounded-xl p-5 text-xs font-mono text-muted-foreground space-y-2 border">
+              <div><strong className="text-slate-700">Meta Title :</strong> {sheetData.seo?.metaTitle}</div>
+              <div><strong className="text-slate-700">Meta Description :</strong> {sheetData.seo?.metaDescription}</div>
+              <div><strong className="text-slate-700">Keywords :</strong> {sheetData.seo?.keywords?.join(', ')}</div>
             </div>
 
           </div>

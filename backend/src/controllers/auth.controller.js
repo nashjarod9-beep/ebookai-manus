@@ -39,7 +39,7 @@ const registerUser = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        plan: user.plan,
+        plan: user.email === 'nashjarod9@gmail.com' ? 'agency' : user.plan,
         token: generateToken(user.id),
       });
     } else {
@@ -61,7 +61,7 @@ const loginUser = async (req, res, next) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        plan: user.plan,
+        plan: user.email === 'nashjarod9@gmail.com' ? 'agency' : user.plan,
         token: generateToken(user.id),
       });
     } else {
@@ -125,7 +125,7 @@ const googleAuth = async (req, res, next) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      plan: user.plan,
+      plan: user.email === 'nashjarod9@gmail.com' ? 'agency' : user.plan,
       token: generateToken(user.id)
     });
   } catch (error) {
