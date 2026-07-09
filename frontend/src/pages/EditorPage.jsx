@@ -111,7 +111,11 @@ export default function EditorPage() {
   if (isLoading) return <div className="p-8 text-center">Chargement de l'éditeur...</div>;
   if (!book) return <div className="p-8 text-center">Ebook introuvable</div>;
 
-  const getFullUrl = (url) => url ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}` : null;
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
+  };
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col">

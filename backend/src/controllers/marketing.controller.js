@@ -519,11 +519,11 @@ const generateMockupVariant = async (req, res, next) => {
 
     let prompt = '';
     if (varId === 1) {
-      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed elegantly on a real hardcover book sitting flat on a rustic wooden table, cozy workspace ambient background, 1080x1080 resolution, professional photography, natural lighting, no text on the background.`;
+      prompt = `A premium social media advertising flyer with a 3D book mockup of the cover for "${book.title}". The book is laying on a stylish wooden table in a high-end cozy workspace. Professional advertising layout, elegant composition, photorealistic, 1080x1080 resolution, warm natural lighting.`;
     } else if (varId === 2) {
-      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed on a book cover being held by a young professional's hand, blurred office interior background, 1080x1080 resolution, professional photography, natural lighting, no text on the background.`;
+      prompt = `A premium professional marketing flyer featuring a 3D book mockup of the cover for "${book.title}" held by a hand. Bold advertising style, blurred modern studio background, high-end sales post aesthetic, 1080x1080 resolution.`;
     } else {
-      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed on a book cover sitting next to a sleek modern laptop on a clean white desk, coffee cup in background, warm workspace vibes, 1080x1080 resolution, professional photography, sharp focus, no text on the background.`;
+      prompt = `An elegant square sales banner flyer showcasing a 3D book mockup of the cover for "${book.title}" next to a premium laptop on a clean desk. Corporate advertisement aesthetic, sharp focus, warm workspace lighting, 1080x1080 resolution.`;
     }
 
     const fluxUrl = await generateImage(prompt, 1024, 1024);

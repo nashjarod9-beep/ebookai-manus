@@ -58,7 +58,11 @@ export default function MarketingVisualsPage() {
     }
   };
 
-  const getFullUrl = (url) => url ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}` : null;
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
+  };
 
   // Render on canvas to download with superimposed text
   const downloadWithText = (relativeUrl, variantName) => {
@@ -171,11 +175,17 @@ export default function MarketingVisualsPage() {
                       alt={v.title} 
                       className="w-full h-full object-cover"
                     />
-                    {/* Hover Canvas Text Preview Mock */}
-                    <div className="absolute inset-x-0 bottom-0 bg-slate-900/90 text-white p-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="text-[10px] font-bold text-amber-500">APERCU TEXTE SUPERPOSÉ</div>
-                      <div className="text-xs font-semibold truncate uppercase">{book?.title}</div>
-                      <div className="text-[9px] text-slate-400">GUIDE PRATIQUE & ILLUSTRÉ</div>
+                    {/* Permanent Advertising Flyer Text Overlay */}
+                    <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 border-t-2 border-amber-500 p-2.5 text-center text-white flex flex-col justify-center items-center h-[26%] min-h-[60px] select-none">
+                      <div className="text-[9px] font-bold text-amber-400 tracking-wider uppercase truncate max-w-full">
+                        {book?.title || "EBOOK"}
+                      </div>
+                      <div className="text-[7px] text-slate-300 font-medium tracking-wide uppercase line-clamp-1 mt-0.5">
+                        GUIDE PRATIQUE & ILLUSTRÉ EN HAUTE DÉFINITION
+                      </div>
+                      <div className="text-[7px] font-extrabold text-amber-500 tracking-widest mt-1 uppercase">
+                        TÉLÉCHARGEZ MAINTENANT
+                      </div>
                     </div>
                   </>
                 ) : (
