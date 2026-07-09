@@ -36,6 +36,7 @@ model Book {
   author       String?
   contactInfo  String?
   targetPages  String?
+  additionalInstructions String? // User specific design guidelines
   chapters     Chapter[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

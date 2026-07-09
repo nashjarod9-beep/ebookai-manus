@@ -1,6 +1,25 @@
 const deepseek = require('./deepseek.service');
 const qwen = require('./qwen.service');
 
+const suggestTitles = async (ebookData) => {
+  console.log("Tentative de suggestion de titres avec DeepSeek...");
+  try {
+    const titles = await deepseek.suggestTitles(ebookData);
+    console.log("Titres suggérés avec succès par DeepSeek.");
+    return { titles, modelUsed: 'deepseek-chat' };
+  } catch (error) {
+    console.error("Échec des suggestions de titres avec DeepSeek, bascule sur Qwen. Erreur :", error.message);
+    try {
+      const titles = await qwen.suggestTitles(ebookData);
+      console.log("Titres suggérés avec succès par Qwen (Fallback).");
+      return { titles, modelUsed: 'qwen-plus' };
+    } catch (qwenError) {
+      console.error("Échec des suggestions de titres avec Qwen également.", qwenError.message);
+      throw new Error("Impossible de suggérer des titres pour l'ebook (DeepSeek et Qwen ont échoué).");
+    }
+  }
+};
+
 const generateBookOutline = async (ebookData) => {
   console.log("Tentative de génération du plan avec DeepSeek...");
   try {
@@ -40,6 +59,7 @@ const generateChapterContent = async (chapterData, bookContext) => {
 };
 
 module.exports = {
+  suggestTitles,
   generateBookOutline,
   generateChapterContent
 };

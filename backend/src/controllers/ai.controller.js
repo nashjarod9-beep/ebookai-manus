@@ -1,8 +1,19 @@
-const { generateBookOutline, generateChapterContent } = require('../services/ai.service');
+const { suggestTitles, generateBookOutline, generateChapterContent } = require('../services/ai.service');
 const { generateImage } = require('../services/flux.service');
 const { downloadImageToBuffer, uploadCoverImage, uploadChapterImage } = require('../services/storage.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+
+const suggestBookTitles = async (req, res, next) => {
+  try {
+    const ebookData = req.body;
+    // ebookData includes: theme, objective, audience, tone, length, language
+    const { titles, modelUsed } = await suggestTitles(ebookData);
+    res.json({ titles, modelUsed });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const generateOutline = async (req, res, next) => {
   try {
@@ -62,7 +73,7 @@ const generateChapter = async (req, res, next) => {
       return res.status(400).json({ message: 'bookId, chapterData et ebookData sont requis.' });
     }
 
-    const { order, title, summary, imagePrompt } = chapterData;
+    const { order, title, summary, imagePrompt, subchapters } = chapterData;
 
     // Check ownership
     const book = await prisma.book.findUnique({ where: { id: bookId } });
@@ -80,9 +91,15 @@ const generateChapter = async (req, res, next) => {
       return res.json(existingChapter);
     }
 
+    // Combine global additionalInstructions from the Book draft if they are not passed
+    const bookContext = {
+      ...ebookData,
+      additionalInstructions: ebookData.additionalInstructions || book.additionalInstructions
+    };
+
     console.log(`Génération du contenu textuel pour le chapitre ${order} : "${title}"...`);
     // 1. Generate text via DeepSeek (or Qwen fallback)
-    const { content, modelUsed } = await generateChapterContent(chapterData, ebookData);
+    const { content, modelUsed } = await generateChapterContent({ order, title, summary, subchapters }, bookContext);
 
     console.log(`Génération de l'illustration pour le chapitre ${order} : "${imagePrompt.substring(0, 40)}..."`);
     // 2. Generate chapter illustration via FLUX (aspect ratio 4:3)
@@ -125,9 +142,6 @@ const generateChapter = async (req, res, next) => {
       });
     }
 
-    // If it is the last chapter, update the book status to 'ready'
-    // Wait, the client will manage the status or we can update it in the PDF step.
-    // Let's make sure the status is set to 'generating' while processing.
     await prisma.book.update({
       where: { id: bookId },
       data: { status: 'generating' }
@@ -140,6 +154,7 @@ const generateChapter = async (req, res, next) => {
 };
 
 module.exports = {
+  suggestBookTitles,
   generateOutline,
   generateCover,
   generateChapter

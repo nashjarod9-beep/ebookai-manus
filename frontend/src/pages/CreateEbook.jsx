@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateEbook, useEbook } from '../hooks/useEbook';
 import { useAI } from '../hooks/useAI';
 import api from '../lib/axios';
-import { Loader2, ArrowRight, Check, Sparkles } from 'lucide-react';
+import { Loader2, ArrowRight, Check, Sparkles, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 
 export default function CreateEbook() {
   const [step, setStep] = useState(1);
@@ -24,12 +24,21 @@ export default function CreateEbook() {
   const [progressMessage, setProgressMessage] = useState('');
   const [resultData, setResultData] = useState(null);
 
+  // New states for titles and outline editing
+  const [titleSuggestions, setTitleSuggestions] = useState([]);
+  const [selectedTitle, setSelectedTitle] = useState('');
+  const [customTitle, setCustomTitle] = useState('');
+  const [isGeneratingTitles, setIsGeneratingTitles] = useState(false);
+  const [isGeneratingOutline, setIsGeneratingOutline] = useState(false);
+  const [newSubchapterText, setNewSubchapterText] = useState({}); // Bound by chapter order
+  const [additionalInstructions, setAdditionalInstructions] = useState('');
+
   const navigate = useNavigate();
   const { draftId } = useParams();
   
   const createEbook = useCreateEbook();
   const { data: draftBook } = useEbook(draftId);
-  const { generateOutline, generateCover, generateChapter } = useAI();
+  const { suggestTitles, generateOutline, generateCover, generateChapter } = useAI();
 
   // Load draft details if draftId is present
   useEffect(() => {
@@ -39,7 +48,8 @@ export default function CreateEbook() {
         try {
           const parsed = JSON.parse(draftBook.outline);
           setOutline(parsed);
-          setStep(2);
+          setSelectedTitle(parsed.title);
+          setStep(3); // Direct to step 3 (Outline validator) if outline loaded
         } catch (e) {
           console.error("Error parsing draft outline:", e);
         }
@@ -55,42 +65,135 @@ export default function CreateEbook() {
         targetPages: draftBook.targetPages || '10 à 20 pages',
         contactInfo: draftBook.contactInfo || ''
       });
+      setAdditionalInstructions(draftBook.additionalInstructions || '');
     }
   }, [draftBook]);
 
-  const handleOutlineGeneration = async () => {
-    setIsGenerating(true);
+  // Step 1 -> Step 2
+  const handleGoToStep2 = async () => {
+    setIsGeneratingTitles(true);
+    setStep(2);
     try {
-      const generatedOutline = await generateOutline(formData);
-      setOutline(generatedOutline);
-      setStep(2);
+      const suggestions = await suggestTitles(formData);
+      setTitleSuggestions(suggestions);
+      if (suggestions.length > 0) {
+        setSelectedTitle(suggestions[0]);
+      }
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la génération de la structure.");
+      alert("Erreur lors de la suggestion des titres. Vous pouvez saisir un titre personnalisé.");
+      setTitleSuggestions(["Titre par défaut"]);
+      setSelectedTitle("Titre par défaut");
     } finally {
-      setIsGenerating(false);
+      setIsGeneratingTitles(false);
     }
+  };
+
+  // Step 2 -> Step 3
+  const handleGoToStep3 = async () => {
+    setIsGeneratingOutline(true);
+    setStep(3);
+    const finalTitle = customTitle.trim() || selectedTitle;
+    try {
+      const generatedOutline = await generateOutline({
+        ...formData,
+        title: finalTitle
+      });
+      setOutline(generatedOutline);
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de la génération de la structure. Veuillez réessayer.");
+      setStep(2);
+    } finally {
+      setIsGeneratingOutline(false);
+    }
+  };
+
+  // Step 3 chapter manipulation helpers
+  const moveChapterUp = (idx) => {
+    if (idx === 0) return;
+    const newChapters = [...outline.chapters];
+    const temp = newChapters[idx];
+    newChapters[idx] = newChapters[idx - 1];
+    newChapters[idx - 1] = temp;
+    newChapters.forEach((ch, i) => {
+      ch.order = i + 1;
+    });
+    setOutline({ ...outline, chapters: newChapters });
+  };
+
+  const moveChapterDown = (idx) => {
+    if (idx === outline.chapters.length - 1) return;
+    const newChapters = [...outline.chapters];
+    const temp = newChapters[idx];
+    newChapters[idx] = newChapters[idx + 1];
+    newChapters[idx + 1] = temp;
+    newChapters.forEach((ch, i) => {
+      ch.order = i + 1;
+    });
+    setOutline({ ...outline, chapters: newChapters });
+  };
+
+  const removeChapter = (idx) => {
+    const newChapters = outline.chapters.filter((_, i) => i !== idx);
+    newChapters.forEach((ch, i) => {
+      ch.order = i + 1;
+    });
+    setOutline({ ...outline, chapters: newChapters });
+  };
+
+  const addNewChapter = () => {
+    const newChapters = [...outline.chapters];
+    newChapters.push({
+      order: newChapters.length + 1,
+      title: "Nouveau chapitre",
+      summary: "Résumé succinct du contenu de ce chapitre.",
+      subchapters: ["Sous-section 1"],
+      imagePrompt: "Illustration moderne et conceptuelle"
+    });
+    setOutline({ ...outline, chapters: newChapters });
+  };
+
+  const handleAddSubchapter = (chapterIdx) => {
+    const text = newSubchapterText[chapterIdx] || '';
+    if (!text.trim()) return;
+
+    const newChapters = [...outline.chapters];
+    if (!newChapters[chapterIdx].subchapters) {
+      newChapters[chapterIdx].subchapters = [];
+    }
+    newChapters[chapterIdx].subchapters.push(text.trim());
+    setOutline({ ...outline, chapters: newChapters });
+    setNewSubchapterText({ ...newSubchapterText, [chapterIdx]: '' });
+  };
+
+  const handleRemoveSubchapter = (chapterIdx, subIdx) => {
+    const newChapters = [...outline.chapters];
+    newChapters[chapterIdx].subchapters = newChapters[chapterIdx].subchapters.filter((_, i) => i !== subIdx);
+    setOutline({ ...outline, chapters: newChapters });
   };
 
   const handleFullGeneration = async () => {
     setIsGenerating(true);
-    setStep(3);
+    setStep(5);
     try {
       let currentBookId = bookId;
+      const finalTitle = customTitle.trim() || selectedTitle || outline.title;
       
       // 1. Create book draft in DB if not already created (for retry resilience)
       if (!currentBookId) {
         setProgressMessage("Création du livre dans la base de données...");
         const book = await createEbook.mutateAsync({
-          title: outline.title,
+          title: finalTitle,
           subject: formData.theme,
           description: outline.description,
           language: formData.language,
           format: 'static',
-          outline: JSON.stringify(outline), // Pass the outline JSON string!
+          outline: JSON.stringify(outline),
           author: formData.author,
           contactInfo: formData.contactInfo,
-          targetPages: formData.targetPages
+          targetPages: formData.targetPages,
+          additionalInstructions: additionalInstructions
         });
         currentBookId = book.id;
         setBookId(book.id);
@@ -105,21 +208,23 @@ export default function CreateEbook() {
       for (let i = 0; i < outline.chapters.length; i++) {
         const ch = outline.chapters[i];
         setProgressMessage(`Génération du chapitre ${i + 1}/${outline.chapters.length} : "${ch.title}"...`);
-        const result = await generateChapter(currentBookId, ch, formData);
+        const result = await generateChapter(currentBookId, ch, {
+          ...formData,
+          additionalInstructions
+        });
         console.log(`Chapitre ${i + 1} généré avec succès :`, result);
       }
 
-      // 4. Generate final PDF using Puppeteer
+      // 4. Generate final PDF using Playwright
       setProgressMessage("Compilation et mise en page du document PDF professionnel...");
       const { data: pdfResult } = await api.post(`/export/pdf/${currentBookId}`);
       
       setResultData({ pdfUrl: pdfResult.pdfPath });
-      setStep(4);
     } catch (error) {
       console.error(error);
       const errMsg = error.response?.data?.error || error.response?.data?.message || error.message;
       alert(`Erreur lors de la génération : ${errMsg}. Vous pourrez reprendre la génération là où elle a échoué.`);
-      setStep(2); // Go back to allow retrying
+      setStep(4); // Go back to allow retrying
     } finally {
       setIsGenerating(false);
       setProgressMessage('');
@@ -130,18 +235,29 @@ export default function CreateEbook() {
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Créer un nouvel ebook avec l'IA</h1>
-        {/* Progress Bar */}
-        <div className="flex items-center justify-between relative">
+        {/* Progress Bar (5 Steps) */}
+        <div className="flex items-center justify-between relative mt-6 mb-10">
           <div className="absolute left-0 top-1/2 w-full h-1 bg-muted -z-10 -translate-y-1/2"></div>
-          {[1, 2, 3, 4].map((s) => (
-            <div key={s} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {s}
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                {s}
+              </div>
+              <span className="text-xs text-muted-foreground mt-1 absolute -translate-y-[-28px] font-medium hidden sm:inline">
+                {s === 1 && "Questionnaire"}
+                {s === 2 && "Titre"}
+                {s === 3 && "Structure"}
+                {s === 4 && "Consignes"}
+                {s === 5 && "Génération"}
+              </span>
             </div>
           ))}
         </div>
       </div>
 
       <div className="bg-card border rounded-xl p-6 shadow-sm">
+        
+        {/* Step 1: Questionnaire */}
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">Étape 1 : Questionnaire de création</h2>
@@ -173,7 +289,7 @@ export default function CreateEbook() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Thème principal</label>
+              <label className="block text-sm font-medium mb-1">Sujet / Thème principal</label>
               <textarea 
                 className="w-full p-3 border rounded-md bg-background"
                 placeholder="Ex: Les bases de l'intelligence artificielle pour les PME..."
@@ -206,7 +322,7 @@ export default function CreateEbook() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Ton</label>
+                <label className="block text-sm font-medium mb-1">Ton d'écriture</label>
                 <select 
                   className="w-full p-3 border rounded-md bg-background"
                   value={formData.tone}
@@ -234,10 +350,10 @@ export default function CreateEbook() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Informations de contact pour la dernière page</label>
+              <label className="block text-sm font-medium mb-1">Informations de contact pour la dernière page (facultatif)</label>
               <textarea 
                 className="w-full p-3 border rounded-md bg-background h-24"
-                placeholder="Ex: Téléphone : +33 6 12 34 56 78&#10;Email : contact@entreprise.com&#10;Réseaux : @MonComptePerso (Instagram, LinkedIn)"
+                placeholder="Ex: Téléphone : +221 77 123 45 67&#10;Email : contact@entreprise.com&#10;Instagram/LinkedIn : @MonCompte"
                 value={formData.contactInfo}
                 onChange={e => setFormData({...formData, contactInfo: e.target.value})}
               />
@@ -258,131 +374,299 @@ export default function CreateEbook() {
 
             <div className="flex justify-end mt-6">
               <button 
-                onClick={handleOutlineGeneration} 
-                disabled={!formData.theme || isGenerating}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50"
+                onClick={handleGoToStep2} 
+                disabled={!formData.theme}
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 font-semibold"
               >
-                {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-                <span>Générer la structure</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && outline && (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Étape 2 : Validation de la structure</h2>
-            <p className="text-muted-foreground text-sm">Vérifiez et ajustez le plan proposé par l'IA avant de lancer la rédaction complète.</p>
-            
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <input 
-                className="font-bold text-lg w-full bg-transparent border-b border-transparent focus:border-border outline-none"
-                value={outline.title}
-                onChange={(e) => setOutline({...outline, title: e.target.value})}
-              />
-              <textarea 
-                className="text-muted-foreground mt-2 w-full bg-transparent border-b border-transparent focus:border-border outline-none resize-none"
-                value={outline.description}
-                onChange={(e) => setOutline({...outline, description: e.target.value})}
-              />
-            </div>
-            
-            <div className="space-y-3">
-              <h4 className="font-semibold">Chapitres ({outline.chapters.length})</h4>
-              {outline.chapters.map((ch, idx) => (
-                <div key={idx} className="p-3 border rounded-md bg-background flex gap-4">
-                  <span className="font-bold text-muted-foreground">{idx + 1}.</span>
-                  <div className="flex-1">
-                    <input 
-                      className="font-medium w-full bg-transparent border-b border-transparent focus:border-border outline-none"
-                      value={ch.title}
-                      onChange={(e) => {
-                        const newChapters = [...outline.chapters];
-                        newChapters[idx].title = e.target.value;
-                        setOutline({...outline, chapters: newChapters});
-                      }}
-                    />
-                    <textarea 
-                      className="text-sm text-muted-foreground w-full bg-transparent border-b border-transparent focus:border-border outline-none resize-none mt-1"
-                      value={ch.summary}
-                      onChange={(e) => {
-                        const newChapters = [...outline.chapters];
-                        newChapters[idx].summary = e.target.value;
-                        setOutline({...outline, chapters: newChapters});
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between mt-6">
-              <button onClick={() => setStep(1)} className="px-4 py-2 border rounded-md hover:bg-muted">Modifier le questionnaire</button>
-              <button 
-                onClick={handleFullGeneration}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90"
-              >
-                <span>{bookId ? "Reprendre la génération de l'ebook" : "Générer l'ebook complet"}</span>
+                <span>Suggérer des titres</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
 
-        {step === 3 && (
-          <div className="py-16 flex flex-col items-center justify-center text-center space-y-6">
-            <Loader2 className="w-16 h-16 text-primary animate-spin" />
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Génération de l'e-book en cours...</h2>
-              <p className="text-primary font-semibold mt-4 text-lg">
-                {progressMessage}
-              </p>
-              <p className="text-muted-foreground max-w-sm mx-auto mt-4 text-sm">
-                L'IA rédige chaque chapitre, génère les illustrations et met en page le document PDF. 
-                <br/><br/>
-                Cette opération peut prendre quelques minutes. Ne fermez pas cette page.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div className="py-12 flex flex-col items-center justify-center text-center space-y-6">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-              <Check className="w-10 h-10" />
-            </div>
-            <h2 className="text-3xl font-bold">Ebook généré avec succès !</h2>
-            <p className="text-muted-foreground max-w-md">
-              Votre livre a été rédigé de manière autonome par DeepSeek et illustré par l'IA FLUX.
-            </p>
+        {/* Step 2: Title Selection */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Étape 2 : Suggestions de titres</h2>
             
-            {resultData?.pdfUrl && (
-              <a 
-                href={resultData.pdfUrl} 
-                target="_blank" 
-                rel="noreferrer"
-                className="mt-4 flex items-center gap-2 text-primary font-bold hover:underline"
-              >
-                <ArrowRight className="w-5 h-5" /> Télécharger le PDF final
-              </a>
-            )}
+            {isGeneratingTitles ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                <p className="text-muted-foreground">Génération de propositions de titres professionnels...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-muted-foreground text-sm">Sélectionnez un titre parmi les propositions de l'IA ou écrivez le vôtre ci-dessous.</p>
+                <div className="grid grid-cols-1 gap-3">
+                  {titleSuggestions.map((title, idx) => (
+                    <div 
+                      key={idx}
+                      onClick={() => {
+                        setSelectedTitle(title);
+                        setCustomTitle('');
+                      }}
+                      className={`p-4 border rounded-xl cursor-pointer hover:border-primary/50 transition-colors ${selectedTitle === title && !customTitle ? 'border-primary bg-primary/5' : 'bg-background'}`}
+                    >
+                      <span className="font-medium text-foreground">{title}</span>
+                    </div>
+                  ))}
+                </div>
 
-            <div className="flex gap-4 mt-8">
-              <button 
-                onClick={() => navigate(`/editor/${bookId}`)}
-                className="bg-primary text-primary-foreground px-8 py-3 rounded-md font-medium hover:bg-primary/90"
-              >
-                Ouvrir dans l'éditeur (Retouches)
-              </button>
-              <button 
-                onClick={() => navigate('/dashboard')}
-                className="border px-8 py-3 rounded-md font-medium hover:bg-muted"
-              >
-                Retour au dashboard
-              </button>
+                <div className="pt-4 border-t">
+                  <label className="block text-sm font-medium mb-1">Ou personnalisez votre titre :</label>
+                  <input 
+                    type="text"
+                    className="w-full p-3 border rounded-md bg-background"
+                    placeholder="Saisissez un titre entièrement personnalisé..."
+                    value={customTitle}
+                    onChange={e => {
+                      setCustomTitle(e.target.value);
+                      setSelectedTitle('');
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-between mt-6">
+                  <button onClick={() => setStep(1)} className="px-4 py-2 border rounded-md hover:bg-muted">Retour</button>
+                  <button 
+                    onClick={handleGoToStep3}
+                    disabled={!selectedTitle && !customTitle.trim()}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 font-semibold"
+                  >
+                    <span>Valider le titre</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Structure Editor */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Étape 3 : Plan de l'e-book</h2>
+            
+            {isGeneratingOutline ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center space-y-4">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                <p className="text-muted-foreground">Création de la structure et des chapitres...</p>
+              </div>
+            ) : outline && (
+              <div className="space-y-6">
+                <p className="text-muted-foreground text-sm">Organisez, renommez ou ajustez les chapitres et leurs sous-sections.</p>
+                
+                <div className="space-y-4">
+                  {outline.chapters.map((ch, idx) => (
+                    <div key={idx} className="p-4 border rounded-xl bg-card space-y-4 relative">
+                      <div className="flex justify-between items-center border-b pb-2">
+                        <span className="font-bold text-primary">Chapitre ${idx + 1}</span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => moveChapterUp(idx)} disabled={idx === 0} className="p-1 border rounded hover:bg-muted disabled:opacity-30">
+                            <ArrowUp className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => moveChapterDown(idx)} disabled={idx === outline.chapters.length - 1} className="p-1 border rounded hover:bg-muted disabled:opacity-30">
+                            <ArrowDown className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => removeChapter(idx)} className="p-1 border border-red-200 text-red-500 rounded hover:bg-red-50">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Titre du chapitre</label>
+                        <input 
+                          className="font-semibold text-lg w-full p-2 border rounded bg-background"
+                          value={ch.title}
+                          onChange={(e) => {
+                            const newChapters = [...outline.chapters];
+                            newChapters[idx].title = e.target.value;
+                            setOutline({...outline, chapters: newChapters});
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase mb-1">Résumé / Description</label>
+                        <textarea 
+                          className="text-sm text-muted-foreground w-full p-2 border rounded bg-background h-16 resize-none"
+                          value={ch.summary}
+                          onChange={(e) => {
+                            const newChapters = [...outline.chapters];
+                            newChapters[idx].summary = e.target.value;
+                            setOutline({...outline, chapters: newChapters});
+                          }}
+                        />
+                      </div>
+
+                      {/* Subchapters List */}
+                      <div className="space-y-2 pt-2 border-t">
+                        <label className="block text-xs font-bold text-muted-foreground uppercase">Sous-chapitres / sections</label>
+                        <div className="space-y-1">
+                          {ch.subchapters && ch.subchapters.map((sub, sIdx) => (
+                            <div key={sIdx} className="flex items-center justify-between bg-muted/50 p-2 rounded text-sm">
+                              <input 
+                                className="bg-transparent outline-none flex-1 font-medium"
+                                value={sub}
+                                onChange={(e) => {
+                                  const newChapters = [...outline.chapters];
+                                  newChapters[idx].subchapters[sIdx] = e.target.value;
+                                  setOutline({...outline, chapters: newChapters});
+                                }}
+                              />
+                              <button onClick={() => handleRemoveSubchapter(idx, sIdx)} className="text-red-500 hover:text-red-700">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <input 
+                            type="text"
+                            className="text-xs p-2 border rounded bg-background flex-1"
+                            placeholder="Nouveau sous-chapitre..."
+                            value={newSubchapterText[idx] || ''}
+                            onChange={(e) => setNewSubchapterText({ ...newSubchapterText, [idx]: e.target.value })}
+                          />
+                          <button onClick={() => handleAddSubchapter(idx)} className="bg-secondary text-secondary-foreground text-xs px-3 py-2 rounded flex items-center gap-1 font-medium">
+                            <Plus className="w-3.5 h-3.5" /> Ajouter
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={addNewChapter}
+                  className="w-full py-3 border border-dashed rounded-xl flex items-center justify-center gap-2 hover:bg-muted text-muted-foreground font-semibold mt-4"
+                >
+                  <Plus className="w-5 h-5" /> Ajouter un chapitre
+                </button>
+
+                <div className="flex justify-between mt-8 border-t pt-4">
+                  <button onClick={() => setStep(2)} className="px-4 py-2 border rounded-md hover:bg-muted">Retour</button>
+                  <button 
+                    onClick={() => setStep(4)}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 font-semibold"
+                  >
+                    <span>Valider le plan</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 4: Additional Instructions */}
+        {step === 4 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-semibold">Étape 4 : Consignes particulières</h2>
+            
+            <div className="space-y-4">
+              <p className="text-muted-foreground text-sm">
+                Souhaitez-vous ajouter des consignes particulières pour la rédaction ? Vous pouvez par exemple :
+              </p>
+              <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                <li>Ajouter des exemples précis ou études de cas.</li>
+                <li>Demander d'insister sur certains points spécifiques.</li>
+                <li>Demander un style particulier (pédagogique, métaphorique, académique).</li>
+                <li>Ajouter des références ou des citations clés.</li>
+                <li>Demander d'éviter certains sujets ou termes techniques complexes.</li>
+              </ul>
+              
+              <textarea 
+                className="w-full p-3 border rounded-md bg-background h-32 mt-4"
+                placeholder="Ex: Utilise des études de cas africaines pour illustrer chaque chapitre. Insiste bien sur l'importance du marketing digital dans le chapitre 3..."
+                value={additionalInstructions}
+                onChange={e => setAdditionalInstructions(e.target.value)}
+              />
+
+              <div className="flex justify-between mt-8 border-t pt-4">
+                <button onClick={() => setStep(3)} className="px-4 py-2 border rounded-md hover:bg-muted">Retour</button>
+                <div className="flex gap-3">
+                  <button onClick={handleFullGeneration} className="px-4 py-2 border rounded-md hover:bg-muted text-muted-foreground">
+                    Passer cette étape
+                  </button>
+                  <button 
+                    onClick={handleFullGeneration}
+                    className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 rounded-md hover:bg-primary/90 font-semibold"
+                  >
+                    <span>Lancer la génération</span>
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Step 5: Sequential Generation & Success Page */}
+        {step === 5 && (
+          <div>
+            {isGenerating ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center space-y-6">
+                <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">Génération de l'e-book en cours...</h2>
+                  <p className="text-primary font-semibold mt-4 text-lg">
+                    {progressMessage}
+                  </p>
+                  <p className="text-muted-foreground max-w-sm mx-auto mt-4 text-sm">
+                    L'IA rédige chaque chapitre selon vos consignes, génère les illustrations et met en page le document PDF. 
+                    <br/><br/>
+                    Cette opération peut prendre quelques minutes. Ne fermez pas cette page.
+                  </p>
+                </div>
+              </div>
+            ) : resultData ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-6">
+                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                  <Check className="w-10 h-10" />
+                </div>
+                <h2 className="text-3xl font-bold">Ebook généré avec succès !</h2>
+                <p className="text-muted-foreground max-w-md">
+                  Votre livre a été rédigé de manière autonome par DeepSeek et illustré par l'IA FLUX.
+                </p>
+                
+                {resultData?.pdfUrl && (
+                  <a 
+                    href={resultData.pdfUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="mt-4 flex items-center gap-2 text-primary font-bold hover:underline"
+                  >
+                    <ArrowRight className="w-5 h-5" /> Télécharger le PDF final
+                  </a>
+                )}
+
+                <div className="flex gap-4 mt-8">
+                  <button 
+                    onClick={() => navigate(`/editor/${bookId}`)}
+                    className="bg-primary text-primary-foreground px-8 py-3 rounded-md font-medium hover:bg-primary/90"
+                  >
+                    Ouvrir dans l'éditeur (Retouches)
+                  </button>
+                  <button 
+                    onClick={() => navigate('/dashboard')}
+                    className="border px-8 py-3 rounded-md font-medium hover:bg-muted"
+                  >
+                    Retour au dashboard
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="py-16 flex flex-col items-center justify-center text-center space-y-4">
+                <p className="text-red-500 font-medium">Une erreur est survenue lors de la génération.</p>
+                <button onClick={() => setStep(4)} className="px-4 py-2 border rounded hover:bg-muted">Retour aux consignes</button>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

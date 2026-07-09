@@ -1,6 +1,11 @@
 import api from '../lib/axios';
 
 export function useAI() {
+  const suggestTitles = async (ebookData) => {
+    const { data } = await api.post('/ai/suggest-titles', ebookData);
+    return data.titles;
+  };
+
   const generateOutline = async (ebookData) => {
     const { data } = await api.post('/ai/outline', ebookData);
     return data;
@@ -16,5 +21,5 @@ export function useAI() {
     return data;
   };
 
-  return { generateOutline, generateCover, generateChapter };
+  return { suggestTitles, generateOutline, generateCover, generateChapter };
 }

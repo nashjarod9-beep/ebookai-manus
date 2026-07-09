@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BookOpen, Sparkles, Download, LayoutTemplate, Layers, PlayCircle } from 'lucide-react';
+import { Sparkles, Download, LayoutTemplate, Layers } from 'lucide-react';
 
 export default function Landing() {
   const features = [
@@ -8,8 +8,6 @@ export default function Landing() {
     { icon: Layers, title: 'Illustrations Auto', desc: 'Des images de haute qualité générées pour chaque chapitre.' },
     { icon: Download, title: 'Export PDF & ZIP', desc: 'Téléchargez votre ebook en PDF ou en format interactif HTML5.' },
     { icon: LayoutTemplate, title: 'Mise en page', desc: 'Un design professionnel prêt à être publié.' },
-    { icon: BookOpen, title: 'Flipbook Interactif', desc: 'Offrez une expérience de lecture immersive à vos lecteurs.' },
-    { icon: PlayCircle, title: 'Zéro friction', desc: 'Aucune carte bancaire, aucun outil payant. 100% gratuit.' },
   ];
 
   return (
@@ -29,7 +27,7 @@ export default function Landing() {
           transition={{ delay: 0.1 }}
           className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
         >
-          Générez un ebook professionnel, illustré et interactif en moins de 5 minutes. 100% gratuit et open source.
+          Générez un ebook professionnel illustré en moins de 5 minutes. 100% facile et adapté au contexte africain.
         </motion.p>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -40,9 +38,6 @@ export default function Landing() {
           <Link to="/register" className="bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-colors shadow-lg">
             Commencer gratuitement
           </Link>
-          <a href="#demo" className="bg-secondary text-secondary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary/80 transition-colors">
-            Voir une démo
-          </a>
         </motion.div>
       </section>
 
@@ -52,7 +47,7 @@ export default function Landing() {
           <h2 className="text-3xl font-bold mb-4">Tout ce dont vous avez besoin</h2>
           <p className="text-muted-foreground">Une plateforme complète pour passer de l'idée à la publication.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {features.map((f, i) => (
             <motion.div 
               key={i}
@@ -72,7 +67,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="w-full border-t py-12 text-center text-muted-foreground">
-        <p>© 2026 EbookAI. 100% Open Source.</p>
+        <p>© 2026 EbookAI. 100% facile et adapté au contexte africain.</p>
       </footer>
     </div>
   );

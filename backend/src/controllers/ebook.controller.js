@@ -33,7 +33,7 @@ const getEbookById = async (req, res, next) => {
 
 const createEbook = async (req, res, next) => {
   try {
-    const { title, subject, description, language, format, outline, author, contactInfo, targetPages } = req.body;
+    const { title, subject, description, language, format, outline, author, contactInfo, targetPages, additionalInstructions } = req.body;
     const book = await prisma.book.create({
       data: {
         title,
@@ -45,6 +45,7 @@ const createEbook = async (req, res, next) => {
         author,
         contactInfo,
         targetPages,
+        additionalInstructions,
         userId: req.user.id
       }
     });
