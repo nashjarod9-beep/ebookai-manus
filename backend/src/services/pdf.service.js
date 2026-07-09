@@ -1,21 +1,4 @@
-const { marked } = require('marked');
 const { uploadPdfExport } = require('./storage.service');
-
-// Configure marked to render safe HTML and handle line breaks correctly
-marked.setOptions({
-  breaks: true,
-  gfm: true
-});
-
-const markdownToHTML = (md) => {
-  if (!md) return '';
-  try {
-    return marked.parse(md);
-  } catch (error) {
-    console.error("Markdown parsing error, fallback to raw text:", error);
-    return md;
-  }
-};
 
 const buildEbookHTML = (book, chapters) => `
 <!DOCTYPE html>
@@ -267,7 +250,7 @@ const buildEbookHTML = (book, chapters) => `
       </div>
       ${c.imageUrl ? `<img class="chapter-img" src="${c.imageUrl}" alt="Illustration Chapitre ${i + 1}">` : ''}
       <div class="chapter-body">
-        ${markdownToHTML(c.content)}
+        ${c.contentHTML || ''}
       </div>
     </div>
   `).join('')}
@@ -290,6 +273,28 @@ const buildEbookHTML = (book, chapters) => `
 const generatePDF = async (book, chapters, userId) => {
   let browser;
   const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
+  // Load marked dynamically (pure ES Module compatibility)
+  const { marked } = await import('marked');
+  marked.setOptions({
+    breaks: true,
+    gfm: true
+  });
+
+  // Pre-render chapter content from Markdown to HTML
+  const processedChapters = chapters.map(c => {
+    let contentHTML = '';
+    try {
+      contentHTML = marked.parse(c.content || '');
+    } catch (e) {
+      console.error(`Error parsing markdown for chapter ${c.order}:`, e);
+      contentHTML = c.content || '';
+    }
+    return {
+      ...c,
+      contentHTML
+    };
+  });
 
   if (isProd) {
     const playwrightCore = await import('playwright-core');
@@ -315,7 +320,8 @@ const generatePDF = async (book, chapters, userId) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  const html = buildEbookHTML(book, chapters);
+  // Pass pre-processed chapters with contentHTML to buildEbookHTML
+  const html = buildEbookHTML(book, processedChapters);
   await page.setContent(html, { waitUntil: 'load' });
 
   const filename = `ebook_${book.id}_${Date.now()}.pdf`;
