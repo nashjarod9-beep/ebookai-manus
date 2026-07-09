@@ -643,16 +643,23 @@ export default function CreateEbook() {
                   </a>
                 )}
 
-                <div className="flex gap-4 mt-8">
+                <div className="flex flex-wrap gap-4 justify-center mt-8">
+                  <button 
+                    onClick={() => navigate(`/product-sheet/${bookId}`)}
+                    className="bg-primary text-primary-foreground px-8 py-3 rounded-md font-semibold hover:bg-primary/90 flex items-center gap-2 shadow"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>Générer la fiche produit</span>
+                  </button>
                   <button 
                     onClick={() => navigate(`/editor/${bookId}`)}
-                    className="bg-primary text-primary-foreground px-8 py-3 rounded-md font-medium hover:bg-primary/90"
+                    className="bg-secondary text-secondary-foreground border px-8 py-3 rounded-md font-semibold hover:bg-secondary/80"
                   >
-                    Ouvrir dans l'éditeur (Retouches)
+                    Ouvrir dans l'éditeur
                   </button>
                   <button 
                     onClick={() => navigate('/dashboard')}
-                    className="border px-8 py-3 rounded-md font-medium hover:bg-muted"
+                    className="border px-8 py-3 rounded-md font-semibold hover:bg-muted text-muted-foreground"
                   >
                     Retour au dashboard
                   </button>

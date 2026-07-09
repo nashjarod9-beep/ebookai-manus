@@ -183,8 +183,8 @@ export default function EditorPage() {
               user?.plan !== 'free' && (
                 <div className="p-2 space-y-1">
                   <button 
-                    onClick={() => setActiveMarketingField('sheet')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${activeMarketingField === 'sheet' ? 'bg-primary/5 text-primary font-medium' : 'hover:bg-muted'}`}
+                    onClick={() => navigate(`/product-sheet/${id}`)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-muted"
                   >
                     <FileText className="w-4 h-4 text-primary" />
                     <span>Fiche Produit</span>

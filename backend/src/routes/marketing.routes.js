@@ -3,6 +3,8 @@ const router = express.Router();
 const { 
   getMarketingAssets, 
   generateProductSheet, 
+  updateProductSheet,
+  exportProductSheetPdf,
   generateTikTokScripts, 
   generateWhatsAppMessages, 
   generateMockup 
@@ -14,6 +16,8 @@ router.use(protect);
 
 router.get('/assets/:bookId', getMarketingAssets);
 router.post('/product-sheet', generateProductSheet);
+router.post('/product-sheet/update', updateProductSheet);
+router.get('/product-sheet/pdf/:bookId', exportProductSheetPdf);
 router.post('/tiktok-scripts', generateTikTokScripts);
 router.post('/whatsapp-msgs', generateWhatsAppMessages);
 router.post('/mockup', generateMockup);
