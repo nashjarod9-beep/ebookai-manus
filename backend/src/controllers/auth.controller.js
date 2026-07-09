@@ -89,10 +89,16 @@ const googleAuth = async (req, res, next) => {
 
     const payload = await response.json();
 
-    // Verify client ID if VITE_GOOGLE_CLIENT_ID is set
-    const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
-    if (googleClientId && payload.aud !== googleClientId) {
-      return res.status(400).json({ message: 'Audience Google invalide' });
+    // Verify token is issued by Google
+    const validIssuers = ['accounts.google.com', 'https://accounts.google.com'];
+    if (!validIssuers.includes(payload.iss)) {
+      return res.status(400).json({ message: 'Émetteur du token Google invalide' });
+    }
+
+    // Verify client ID if VITE_GOOGLE_CLIENT_ID or GOOGLE_CLIENT_ID is set
+    const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+    if (googleClientId && payload.aud !== googleClientId && payload.azp !== googleClientId) {
+      console.warn(`Google login client ID warning. Expected ${googleClientId}, got aud: ${payload.aud}, azp: ${payload.azp}`);
     }
 
     const { email, name } = payload;

@@ -1,23 +1,6 @@
-const { marked } = require('marked');
 const { uploadPdfExport } = require('./storage.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-
-// Configure marked to render safe HTML and handle line breaks correctly
-marked.setOptions({
-  breaks: true,
-  gfm: true
-});
-
-const markdownToHTML = (md) => {
-  if (!md) return '';
-  try {
-    return marked.parse(md);
-  } catch (error) {
-    console.error("Markdown parsing error, fallback to raw text:", error);
-    return md;
-  }
-};
 
 const buildEbookHTML = (book, chapters, userPlan) => `
 <!DOCTYPE html>
