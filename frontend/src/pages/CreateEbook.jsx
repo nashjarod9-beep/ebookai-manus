@@ -13,7 +13,10 @@ export default function CreateEbook() {
     audience: '', 
     tone: 'Professionnel', 
     length: 'Court (environ 5 chapitres)', 
-    language: 'fr' 
+    language: 'fr',
+    author: '',
+    targetPages: '10 à 20 pages',
+    contactInfo: ''
   });
   const [outline, setOutline] = useState(null);
   const [bookId, setBookId] = useState(null);
@@ -47,7 +50,10 @@ export default function CreateEbook() {
         audience: '',
         tone: 'Professionnel',
         length: 'Court (environ 5 chapitres)',
-        language: draftBook.language || 'fr'
+        language: draftBook.language || 'fr',
+        author: draftBook.author || '',
+        targetPages: draftBook.targetPages || '10 à 20 pages',
+        contactInfo: draftBook.contactInfo || ''
       });
     }
   }, [draftBook]);
@@ -81,7 +87,10 @@ export default function CreateEbook() {
           description: outline.description,
           language: formData.language,
           format: 'static',
-          outline: JSON.stringify(outline) // Pass the outline JSON string!
+          outline: JSON.stringify(outline), // Pass the outline JSON string!
+          author: formData.author,
+          contactInfo: formData.contactInfo,
+          targetPages: formData.targetPages
         });
         currentBookId = book.id;
         setBookId(book.id);
@@ -108,7 +117,6 @@ export default function CreateEbook() {
       setStep(4);
     } catch (error) {
       console.error(error);
-      // Read response error if available
       const errMsg = error.response?.data?.error || error.response?.data?.message || error.message;
       alert(`Erreur lors de la génération : ${errMsg}. Vous pourrez reprendre la génération là où elle a échoué.`);
       setStep(2); // Go back to allow retrying
@@ -138,6 +146,32 @@ export default function CreateEbook() {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold mb-4">Étape 1 : Questionnaire de création</h2>
             
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nom de l'auteur</label>
+                <input 
+                  type="text"
+                  className="w-full p-3 border rounded-md bg-background"
+                  placeholder="Ex: Jean Dupont"
+                  value={formData.author}
+                  onChange={e => setFormData({...formData, author: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Intervalle de pages visé</label>
+                <select 
+                  className="w-full p-3 border rounded-md bg-background"
+                  value={formData.targetPages}
+                  onChange={e => setFormData({...formData, targetPages: e.target.value})}
+                >
+                  <option value="5 à 10 pages">5 à 10 pages</option>
+                  <option value="10 à 20 pages">10 à 20 pages</option>
+                  <option value="20 à 30 pages">20 à 30 pages</option>
+                  <option value="30 pages et plus">30 pages et plus</option>
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Thème principal</label>
               <textarea 
@@ -185,7 +219,7 @@ export default function CreateEbook() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Longueur</label>
+                <label className="block text-sm font-medium mb-1">Nombre estimé de chapitres</label>
                 <select 
                   className="w-full p-3 border rounded-md bg-background"
                   value={formData.length}
@@ -197,6 +231,16 @@ export default function CreateEbook() {
                   <option value="Long (plus de 10 chapitres)">Long (plus de 10 chapitres)</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Informations de contact pour la dernière page</label>
+              <textarea 
+                className="w-full p-3 border rounded-md bg-background h-24"
+                placeholder="Ex: Téléphone : +33 6 12 34 56 78&#10;Email : contact@entreprise.com&#10;Réseaux : @MonComptePerso (Instagram, LinkedIn)"
+                value={formData.contactInfo}
+                onChange={e => setFormData({...formData, contactInfo: e.target.value})}
+              />
             </div>
 
             <div>

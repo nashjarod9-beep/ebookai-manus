@@ -1,16 +1,20 @@
+const { marked } = require('marked');
 const { uploadPdfExport } = require('./storage.service');
+
+// Configure marked to render safe HTML and handle line breaks correctly
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
 
 const markdownToHTML = (md) => {
   if (!md) return '';
-  return md
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*)\*/gim, '<em>$1</em>')
-    .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/\n\n/gim, '<p>$1</p>') // wrap paragraphs nicely
-    .replace(/\n/gim, '<br>');
+  try {
+    return marked.parse(md);
+  } catch (error) {
+    console.error("Markdown parsing error, fallback to raw text:", error);
+    return md;
+  }
 };
 
 const buildEbookHTML = (book, chapters) => `
@@ -41,40 +45,44 @@ const buildEbookHTML = (book, chapters) => `
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 90vh;
+      height: 92vh;
       text-align: center;
       font-family: 'Playfair Display', serif;
-      padding: 40px;
+      padding: 20px;
       box-sizing: border-box;
     }
     .cover-title {
-      font-size: 40px;
+      font-size: 42px;
       font-weight: 700;
       color: #1A202C;
+      margin-top: 20px;
       margin-bottom: 10px;
       line-height: 1.2;
     }
     .cover-subtitle {
       font-size: 18px;
       color: #718096;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       font-style: italic;
+      font-family: 'Inter', sans-serif;
+      max-width: 80%;
     }
     .cover-img {
-      max-width: 80%;
-      height: 380px;
+      width: 100%;
+      max-width: 90%;
+      height: 480px;
       object-fit: cover;
       border-radius: 12px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      margin-bottom: 40px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
+      margin-bottom: 30px;
     }
     .cover-author {
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
+      font-size: 15px;
       text-transform: uppercase;
       letter-spacing: 2px;
-      color: #4A5568;
-      font-weight: 500;
+      color: #2B6CB0;
+      font-weight: 700;
     }
     
     /* Table of Contents */
@@ -173,16 +181,68 @@ const buildEbookHTML = (book, chapters) => `
       font-style: italic;
       color: #4A5568;
     }
+    .chapter-body ul, .chapter-body ol {
+      margin-bottom: 20px;
+      padding-left: 20px;
+    }
+    .chapter-body li {
+      margin-bottom: 8px;
+    }
+
+    /* Back Cover / Final Page */
+    .back-cover {
+      page-break-before: always;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 92vh;
+      text-align: center;
+      padding: 40px;
+      box-sizing: border-box;
+      background-color: #F7FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+    }
+    .back-cover h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      color: #1A202C;
+      margin-bottom: 20px;
+    }
+    .back-cover-author {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #2B6CB0;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .back-cover-details {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      line-height: 2;
+      color: #4A5568;
+      margin-bottom: 40px;
+      max-width: 80%;
+    }
+    .back-cover-footer {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: #A0AEC0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
   </style>
 </head>
 <body>
   <!-- Cover Page -->
   <div class="cover">
-    <h1>EbookAI</h1>
     ${book.coverUrl ? `<img class="cover-img" src="${book.coverUrl}" alt="Cover Image">` : ''}
     <div class="cover-title">${book.title}</div>
     <div class="cover-subtitle">${book.description || ''}</div>
-    <div class="cover-author">Généré par EbookAI</div>
+    <div class="cover-author">Par ${book.author || 'EbookAI'}</div>
   </div>
   
   <!-- Table of Contents -->
@@ -211,6 +271,18 @@ const buildEbookHTML = (book, chapters) => `
       </div>
     </div>
   `).join('')}
+
+  <!-- Back Cover / Final Page -->
+  ${book.contactInfo ? `
+    <div class="back-cover">
+      <h2>Contact & Informations</h2>
+      <div class="back-cover-author">Auteur : ${book.author || 'Anonyme'}</div>
+      <div class="back-cover-details">
+        ${book.contactInfo.replace(/\n/g, '<br>')}
+      </div>
+      <div class="back-cover-footer">Merci pour votre lecture !</div>
+    </div>
+  ` : ''}
 </body>
 </html>
 `;
@@ -232,9 +304,7 @@ const generatePDF = async (book, chapters, userId) => {
       headless: chromium.headless,
     });
   } else {
-    const playwrightCore = await import('playwright-core');
-    const playwrightChromium = playwrightCore.chromium;
-    
+    const { chromium: playwrightChromium } = require('playwright-core');
     browser = await playwrightChromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],

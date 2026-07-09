@@ -60,10 +60,10 @@ Réponds UNIQUEMENT en JSON valide, avec la structure suivante (sans markdown ma
       "order": 1,
       "title": "Titre du chapitre",
       "summary": "Résumé détaillé de ce qui sera couvert",
-      "imagePrompt": "Description détaillée de l'illustration pour ce chapitre"
+      "imagePrompt": "Description artistique extrêmement détaillée d'une illustration moderne (ex: style vectoriel 3D épuré ou photo conceptuelle, couleurs vives, fond propre et simple, pas de texte, haute définition) pour ce chapitre"
     }
   ],
-  "coverImagePrompt": "Description détaillée pour la génération de la couverture"
+  "coverImagePrompt": "Description artistique extrêmement détaillée d'une couverture de livre professionnel (ex: style graphique abstrait, minimaliste ou scène conceptuelle moderne, couleurs riches et harmonieuses, aucun texte ni écriture, haute résolution) à générer avec l'IA FLUX"
 }
 Le nombre de chapitres doit être adapté à la longueur souhaitée (${length}). JSON uniquement, rien d'autre.`;
 
