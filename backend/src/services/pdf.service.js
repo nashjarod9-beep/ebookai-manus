@@ -220,8 +220,11 @@ const generatePDF = async (book, chapters, userId) => {
   const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
   if (isProd) {
-    const { chromium: playwrightChromium } = require('playwright-core');
-    const chromium = require('@sparticuz/chromium');
+    const playwrightCore = await import('playwright-core');
+    const playwrightChromium = playwrightCore.chromium;
+    
+    const sparticuzChromiumModule = await import('@sparticuz/chromium');
+    const chromium = sparticuzChromiumModule.default || sparticuzChromiumModule;
     
     browser = await playwrightChromium.launch({
       args: chromium.args,
@@ -229,7 +232,9 @@ const generatePDF = async (book, chapters, userId) => {
       headless: chromium.headless,
     });
   } else {
-    const { chromium: playwrightChromium } = require('playwright-core');
+    const playwrightCore = await import('playwright-core');
+    const playwrightChromium = playwrightCore.chromium;
+    
     browser = await playwrightChromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
