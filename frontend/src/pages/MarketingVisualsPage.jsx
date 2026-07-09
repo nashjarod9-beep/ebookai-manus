@@ -42,7 +42,7 @@ export default function MarketingVisualsPage() {
   const handleGenerate = async (variantId) => {
     setGenerating(variantId);
     try {
-      const { data } = await api.post('/mockup/generate-variant', { bookId, variantId });
+      const { data } = await api.post('/marketing/mockup', { bookId, variantId });
       if (data) {
         setAssets({
           mockupUrl1: data.mockupUrl1,
