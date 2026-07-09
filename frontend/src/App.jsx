@@ -9,6 +9,8 @@ import EditorPage from './pages/EditorPage';
 import PreviewPage from './pages/PreviewPage';
 import PricingPage from './pages/PricingPage';
 import ProductSheetPage from './pages/ProductSheetPage';
+import MarketingVisualsPage from './pages/MarketingVisualsPage';
+import MarketingContentPage from './pages/MarketingContentPage';
 import { useAuth } from './hooks/useAuth';
 
 function PrivateRoute({ children }) {
@@ -33,6 +35,8 @@ function App() {
             <Route path="/preview/:id" element={<PrivateRoute><PreviewPage /></PrivateRoute>} />
             <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
             <Route path="/product-sheet/:bookId" element={<PrivateRoute><ProductSheetPage /></PrivateRoute>} />
+            <Route path="/marketing/visuals/:bookId" element={<PrivateRoute><MarketingVisualsPage /></PrivateRoute>} />
+            <Route path="/marketing/content/:bookId" element={<PrivateRoute><MarketingContentPage /></PrivateRoute>} />
           </Routes>
         </main>
       </div>

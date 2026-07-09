@@ -63,7 +63,7 @@ const getMarketingAssets = async (req, res, next) => {
     }
 
     const asset = await prisma.marketingAsset.findUnique({ where: { bookId } });
-    res.json(asset || { bookId, productSheet: null, tiktokScripts: null, whatsappMsgs: null, mockupUrl: null });
+    res.json(asset || { bookId, productSheet: null, tiktokScripts: null, whatsappMsgs: null, mockupUrl1: null, mockupUrl2: null, mockupUrl3: null });
   } catch (error) {
     next(error);
   }
@@ -127,7 +127,6 @@ La fiche produit doit répondre EXACTEMENT à ce format JSON valide (sans explic
     const resultText = await getCallAI(prompt, true);
     const cleanContent = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
 
-    // Verify it is parseable JSON
     JSON.parse(cleanContent);
 
     const asset = await prisma.marketingAsset.upsert({
@@ -150,7 +149,6 @@ const updateProductSheet = async (req, res, next) => {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
-    // Verify it is parseable JSON
     JSON.parse(productSheet);
 
     const asset = await prisma.marketingAsset.upsert({
@@ -292,32 +290,32 @@ const exportProductSheetPdf = async (req, res, next) => {
 
   <div class="section">
     <h2>Description Commerciale</h2>
-    <p><strong>Introduction :</strong> ${data.longDescription.introduction}</p>
-    <p><strong>Le Problème :</strong> ${data.longDescription.problem}</p>
-    <p><strong>La Solution :</strong> ${data.longDescription.solution}</p>
-    <p><strong>Ce que vous allez apprendre :</strong> ${data.longDescription.whatTheyWillLearn}</p>
-    <p><strong>Pourquoi cet ebook est unique :</strong> ${data.longDescription.whyDifferent}</p>
-    <p><strong>Conclusion :</strong> ${data.longDescription.conclusion}</p>
+    <p><strong>Introduction :</strong> ${data.longDescription?.introduction}</p>
+    <p><strong>Le Problème :</strong> ${data.longDescription?.problem}</p>
+    <p><strong>La Solution :</strong> ${data.longDescription?.solution}</p>
+    <p><strong>Ce que vous allez apprendre :</strong> ${data.longDescription?.whatTheyWillLearn}</p>
+    <p><strong>Pourquoi cet ebook est unique :</strong> ${data.longDescription?.whyDifferent}</p>
+    <p><strong>Conclusion :</strong> ${data.longDescription?.conclusion}</p>
   </div>
 
   <div class="grid section">
     <div class="col">
       <h2>Bénéfices Clés</h2>
       <ul>
-        ${data.benefits.map(b => `<li>${b}</li>`).join('')}
+        ${data.benefits?.map(b => `<li>${b}</li>`).join('')}
       </ul>
     </div>
     <div class="col">
       <h2>Bonus Inclus</h2>
       <ul>
-        ${data.bonus.map(b => `<li>${b}</li>`).join('')}
+        ${data.bonus?.map(b => `<li>${b}</li>`).join('')}
       </ul>
     </div>
   </div>
 
   <div class="section">
     <h2>Questions Fréquentes (FAQ)</h2>
-    ${data.faq.map(f => `
+    ${data.faq?.map(f => `
       <div class="faq-item">
         <div class="faq-q">❓ Q : ${f.question}</div>
         <div class="faq-a">💡 R : ${f.answer}</div>
@@ -330,9 +328,9 @@ const exportProductSheetPdf = async (req, res, next) => {
   </div>
 
   <div class="seo-box">
-    <div class="seo-title">SEO - Meta Title : ${data.seo.metaTitle}</div>
-    <div><strong>Meta Description :</strong> ${data.seo.metaDescription}</div>
-    <div style="margin-top: 4px;"><strong>Mots-clés :</strong> ${data.seo.keywords.join(', ')}</div>
+    <div class="seo-title">SEO - Meta Title : ${data.seo?.metaTitle}</div>
+    <div><strong>Meta Description :</strong> ${data.seo?.metaDescription}</div>
+    <div style="margin-top: 4px;"><strong>Mots-clés :</strong> ${data.seo?.keywords?.join(', ')}</div>
   </div>
 </body>
 </html>
@@ -344,7 +342,6 @@ const exportProductSheetPdf = async (req, res, next) => {
     if (isProd) {
       const playwrightCore = await import('playwright-core');
       const playwrightChromium = playwrightCore.chromium;
-      
       const sparticuzChromiumModule = await import('@sparticuz/chromium');
       const chromium = sparticuzChromiumModule.default || sparticuzChromiumModule;
       
@@ -364,7 +361,6 @@ const exportProductSheetPdf = async (req, res, next) => {
 
     const context = await browser.newContext();
     const page = await context.newPage();
-
     await page.setContent(htmlContent, { waitUntil: 'load' });
 
     const pdfBuffer = await page.pdf({
@@ -399,12 +395,21 @@ Génère 10 scripts courts et viraux de 15 à 30 secondes pour faire la promotio
 
 Chaque script doit être structuré de manière rigoureuse avec :
 - Une accroche ultra-engageante (Hook) pour retenir l'attention dans les 3 premières secondes.
-- Un corps rapide (Body) apportant un conseil ou une révélation.
+- Un corps rapide (Développement) apportant un conseil ou une révélation.
 - Un appel à l'action clair (CTA) pour télécharger l'ebook.
+- Des hashtags pertinents.
+- Une durée estimée.
 
 Réponds obligatoirement au format JSON valide, sous la forme d'un tableau d'objets (sans explications, sans markdown code block) :
 [
-  { "id": 1, "hook": "Accroche choc...", "body": "Contenu rapide...", "cta": "Clique sur le lien en bio..." },
+  { 
+    "id": 1, 
+    "hook": "Accroche choc...", 
+    "body": "Développement rapide...", 
+    "cta": "Clique sur le lien en bio...",
+    "hashtags": "#viral #ebook #marketing",
+    "duration": "25s"
+  },
   ...
 ]`;
 
@@ -439,21 +444,21 @@ Rédige 5 messages promotionnels WhatsApp différents pour promouvoir et vendre 
 - Titre : "${book.title}"
 - Thème : "${book.subject}"
 
-Les messages doivent avoir des styles variés :
-1. Direct et factuel (bénéfice immédiat).
-2. Storytelling (résolution d'un problème commun).
-3. Liste à puces (les bénéfices clés).
-4. Offre limitée / Urgence (FOMO).
-5. Amical et informel.
+Les messages doivent avoir un ton ultra naturel et correspondre EXACTEMENT aux 5 approches de vente suivantes :
+1. Curiosité (suscite l'intérêt immédiat sans tout révéler).
+2. Urgence (joue sur la rareté, le temps limité).
+3. Storytelling (raconte une courte histoire de résolution de problème).
+4. Preuve sociale (inclut des faux avis / de la validation).
+5. Offre limitée (offre de réduction temporaire).
 
 Utilise des emojis pour rendre la lecture fluide et aérée.
-Réponds obligatoirement au format JSON valide, sous la forme d'un tableau de 5 chaînes de caractères (sans explications, sans markdown code block) :
+Réponds obligatoirement au format JSON valide, sous la forme d'un tableau d'objets (sans explications, sans markdown code block) :
 [
-  "Message 1...",
-  "Message 2...",
-  "Message 3...",
-  "Message 4...",
-  "Message 5..."
+  { "approach": "Curiosité", "content": "Message 1..." },
+  { "approach": "Urgence", "content": "Message 2..." },
+  { "approach": "Storytelling", "content": "Message 3..." },
+  { "approach": "Preuve sociale", "content": "Message 4..." },
+  { "approach": "Offre limitée", "content": "Message 5..." }
 ]`;
 
     const resultText = await getCallAI(prompt, true);
@@ -473,28 +478,64 @@ Réponds obligatoirement au format JSON valide, sous la forme d'un tableau de 5 
   }
 };
 
-const generateMockup = async (req, res, next) => {
+const updateSocialMarketing = async (req, res, next) => {
   try {
-    const { bookId } = req.body;
+    const { bookId, tiktokScripts, whatsappMsgs } = req.body;
+    const book = await prisma.book.findUnique({ where: { id: bookId } });
+    if (!book || book.userId !== req.user.id) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+
+    if (tiktokScripts) JSON.parse(tiktokScripts);
+    if (whatsappMsgs) JSON.parse(whatsappMsgs);
+
+    const dataToUpdate = {};
+    if (tiktokScripts) dataToUpdate.tiktokScripts = tiktokScripts;
+    if (whatsappMsgs) dataToUpdate.whatsappMsgs = whatsappMsgs;
+
+    const asset = await prisma.marketingAsset.upsert({
+      where: { bookId },
+      update: dataToUpdate,
+      create: { bookId, ...dataToUpdate }
+    });
+
+    res.json(asset);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const generateMockupVariant = async (req, res, next) => {
+  try {
+    const { bookId, variantId } = req.body;
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
-    console.log(`Génération du mockup publicitaire FLUX pour l'ebook ${bookId}...`);
+    const varId = parseInt(variantId);
+    console.log(`Génération mockup variante ${varId} pour l'ebook ${bookId}...`);
 
-    const prompt = `A modern square 3D mockup of the ebook cover for "${book.title}" displayed elegantly on a sleek smartphone screen, clean minimalist workspace background with warm wooden accents, bright professional lighting, 1080x1080 aspect ratio advertising visual, high definition, no text on the background.`;
+    let prompt = '';
+    if (varId === 1) {
+      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed elegantly on a real hardcover book sitting flat on a rustic wooden table, cozy workspace ambient background, 1080x1080 resolution, professional photography, natural lighting, no text on the background.`;
+    } else if (varId === 2) {
+      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed on a book cover being held by a young professional's hand, blurred office interior background, 1080x1080 resolution, professional photography, natural lighting, no text on the background.`;
+    } else {
+      prompt = `A modern premium square 3D mockup of the book cover for "${book.title}" displayed on a book cover sitting next to a sleek modern laptop on a clean white desk, coffee cup in background, warm workspace vibes, 1080x1080 resolution, professional photography, sharp focus, no text on the background.`;
+    }
 
     const fluxUrl = await generateImage(prompt, 1024, 1024);
     const imageBuffer = await downloadImageToBuffer(fluxUrl);
-    const filename = `mockup_${bookId}_${Date.now()}.png`;
+    const filename = `mockup_v${varId}_${bookId}_${Date.now()}.png`;
     const publicMockupUrl = await uploadChapterImage(imageBuffer, req.user.id, filename);
 
+    const updateField = `mockupUrl${varId}`;
     const asset = await prisma.marketingAsset.upsert({
       where: { bookId },
-      update: { mockupUrl: publicMockupUrl },
-      create: { bookId, mockupUrl: publicMockupUrl }
+      update: { [updateField]: publicMockupUrl },
+      create: { bookId, [updateField]: publicMockupUrl }
     });
 
     res.json(asset);
@@ -510,5 +551,6 @@ module.exports = {
   exportProductSheetPdf,
   generateTikTokScripts,
   generateWhatsAppMessages,
-  generateMockup
+  updateSocialMarketing,
+  generateMockupVariant
 };

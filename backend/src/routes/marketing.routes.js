@@ -7,7 +7,8 @@ const {
   exportProductSheetPdf,
   generateTikTokScripts, 
   generateWhatsAppMessages, 
-  generateMockup 
+  updateSocialMarketing,
+  generateMockupVariant
 } = require('../controllers/marketing.controller');
 const { protect } = require('../middleware/auth.middleware');
 
@@ -20,6 +21,7 @@ router.post('/product-sheet/update', updateProductSheet);
 router.get('/product-sheet/pdf/:bookId', exportProductSheetPdf);
 router.post('/tiktok-scripts', generateTikTokScripts);
 router.post('/whatsapp-msgs', generateWhatsAppMessages);
-router.post('/mockup', generateMockup);
+router.post('/social-scripts/update', updateSocialMarketing);
+router.post('/mockup/generate-variant', generateMockupVariant);
 
 module.exports = router;

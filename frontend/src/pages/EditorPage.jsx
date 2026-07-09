@@ -190,22 +190,22 @@ export default function EditorPage() {
                     <span>Fiche Produit</span>
                   </button>
                   <button 
-                    onClick={() => setActiveMarketingField('mockup')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${activeMarketingField === 'mockup' ? 'bg-primary/5 text-primary font-medium' : 'hover:bg-muted'}`}
+                    onClick={() => navigate(`/marketing/visuals/${id}`)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-muted"
                   >
                     <ImageIcon className="w-4 h-4 text-emerald-500" />
-                    <span>Mockup 1080x1080</span>
+                    <span>Visuels 3D</span>
                   </button>
                   <button 
-                    onClick={() => setActiveMarketingField('tiktok')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${activeMarketingField === 'tiktok' ? 'bg-primary/5 text-primary font-medium' : 'hover:bg-muted'}`}
+                    onClick={() => navigate(`/marketing/content/${id}`)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-muted"
                   >
                     <Video className="w-4 h-4 text-purple-500" />
                     <span>Scripts TikTok</span>
                   </button>
                   <button 
-                    onClick={() => setActiveMarketingField('whatsapp')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${activeMarketingField === 'whatsapp' ? 'bg-primary/5 text-primary font-medium' : 'hover:bg-muted'}`}
+                    onClick={() => navigate(`/marketing/content/${id}`)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors hover:bg-muted"
                   >
                     <Send className="w-4 h-4 text-blue-500" />
                     <span>Messages WhatsApp</span>

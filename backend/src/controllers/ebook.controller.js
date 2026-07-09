@@ -110,10 +110,64 @@ const deleteEbook = async (req, res, next) => {
   }
 };
 
+const duplicateEbook = async (req, res, next) => {
+  try {
+    const bookId = req.params.id;
+    const srcBook = await prisma.book.findUnique({
+      where: { id: bookId },
+      include: { chapters: true }
+    });
+
+    if (!srcBook || srcBook.userId !== req.user.id) {
+      return res.status(401).json({ message: 'Non autorisé' });
+    }
+
+    // Create duplicated book
+    const duplicatedBook = await prisma.book.create({
+      data: {
+        userId: req.user.id,
+        title: `Copie de ${srcBook.title}`,
+        subject: srcBook.subject,
+        description: srcBook.description,
+        language: srcBook.language,
+        coverUrl: srcBook.coverUrl,
+        format: srcBook.format,
+        status: srcBook.status,
+        outline: srcBook.outline,
+        author: srcBook.author,
+        contactInfo: srcBook.contactInfo,
+        targetPages: srcBook.targetPages,
+        additionalInstructions: srcBook.additionalInstructions,
+        chapters: {
+          create: srcBook.chapters.map(ch => ({
+            title: ch.title,
+            content: ch.content,
+            imageUrl: ch.imageUrl,
+            imagePrompt: ch.imagePrompt,
+            order: ch.order,
+            quizzes: ch.quizzes,
+            videoUrl: ch.videoUrl,
+            audioPath: ch.audioPath,
+            modelUsed: ch.modelUsed
+          }))
+        }
+      },
+      include: {
+        chapters: true
+      }
+    });
+
+    res.status(201).json(duplicatedBook);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getEbooks,
   getEbookById,
   createEbook,
   updateEbook,
-  deleteEbook
+  deleteEbook,
+  duplicateEbook
 };

@@ -64,12 +64,14 @@ model Chapter {
 }
 
 model MarketingAsset {
-  id           String   @id @default(cuid())
-  bookId       String   @unique
-  book         Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  productSheet String?  @db.Text
-  tiktokScripts String? @db.Text // JSON stringified array of scripts
-  whatsappMsgs  String? @db.Text // JSON stringified array of messages
-  mockupUrl     String?  // FLUX generated mockup image url
-  createdAt    DateTime @default(now())
+  id            String   @id @default(cuid())
+  bookId        String   @unique
+  book          Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  productSheet  String?  @db.Text
+  tiktokScripts String?  @db.Text // JSON stringified array of scripts
+  whatsappMsgs  String?  @db.Text // JSON stringified array of messages
+  mockupUrl1    String?  // Variante 1: Livre posé sur une table
+  mockupUrl2    String?  // Variante 2: Livre tenu dans une main
+  mockupUrl3    String?  // Variante 3: Livre avec ordinateur portable
+  createdAt     DateTime @default(now())
 }
