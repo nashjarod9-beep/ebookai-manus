@@ -135,9 +135,58 @@ const getMe = async (req, res, next) => {
   }
 };
 
+const updateUserPlan = async (req, res, next) => {
+  try {
+    const { plan } = req.body;
+    const validPlans = ['free', 'starter', 'creator', 'business', 'agency'];
+    if (!validPlans.includes(plan)) {
+      return res.status(400).json({ message: 'Plan invalide' });
+    }
+
+    const limits = {
+      free: 0,
+      starter: 3,
+      creator: 10,
+      business: 25,
+      agency: 60
+    };
+    const planLimit = limits[plan] || 0;
+
+    const start = new Date();
+    const end = new Date();
+    end.setDate(start.getDate() + 30);
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        plan,
+        subscriptionStart: start,
+        subscriptionEnd: end,
+        ebooksConsumed: 0,
+        quotaRemaining: planLimit
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        plan: true,
+        subscriptionStart: true,
+        subscriptionEnd: true,
+        ebooksConsumed: true,
+        quotaRemaining: true
+      }
+    });
+
+    res.json({ user: updatedUser });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   googleAuth,
   getMe,
+  updateUserPlan
 };

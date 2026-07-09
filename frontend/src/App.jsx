@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import CreateEbook from './pages/CreateEbook';
 import EditorPage from './pages/EditorPage';
 import PreviewPage from './pages/PreviewPage';
+import PricingPage from './pages/PricingPage';
 import { useAuth } from './hooks/useAuth';
 
 function PrivateRoute({ children }) {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/create/:draftId" element={<PrivateRoute><CreateEbook /></PrivateRoute>} />
             <Route path="/editor/:id" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
             <Route path="/preview/:id" element={<PrivateRoute><PreviewPage /></PrivateRoute>} />
+            <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
           </Routes>
         </main>
       </div>

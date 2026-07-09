@@ -1,21 +1,27 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEbook } from '../hooks/useEbook';
+import { useAuth } from '../hooks/useAuth';
 import api from '../lib/axios';
-import HTMLFlipBook from 'react-pageflip';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Lock, AlertTriangle } from 'lucide-react';
 
 export default function PreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: book, isLoading } = useEbook(id);
+  const { user } = useAuth();
   const [exportingPdf, setExportingPdf] = useState(false);
   const [exportingZip, setExportingZip] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const getFullUrl = (url) => url ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}` : null;
 
   const handleExportPdf = async () => {
+    if (user?.plan === 'free') {
+      setShowUpgradeModal(true);
+      return;
+    }
     setExportingPdf(true);
     try {
       const { data } = await api.post(`/export/pdf/${id}`);
@@ -28,6 +34,10 @@ export default function PreviewPage() {
   };
 
   const handleExportZip = async () => {
+    if (user?.plan === 'free') {
+      setShowUpgradeModal(true);
+      return;
+    }
     setExportingZip(true);
     try {
       const { data } = await api.post(`/export/zip/${id}`);
@@ -39,40 +49,117 @@ export default function PreviewPage() {
     }
   };
 
-  if (isLoading || !book) return <div className="p-12 text-center">Chargement...</div>;
+  if (isLoading || !book) return <div className="p-12 text-center font-medium">Chargement de l'aperçu...</div>;
+
+  const isFreePlan = user?.plan === 'free';
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-muted/30">
+      {/* Header bar */}
       <div className="h-14 border-b bg-card flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-muted rounded-md">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-semibold">Aperçu : {book.title}</h1>
+          <h1 className="font-semibold line-clamp-1">Aperçu : {book.title}</h1>
         </div>
+        
         <div className="flex items-center gap-3">
+          {/* PDF Download Button */}
           <button 
             onClick={handleExportPdf}
             disabled={exportingPdf}
-            className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-muted text-sm font-medium"
+            className={`flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium ${isFreePlan ? 'hover:bg-red-50 text-red-500 border-red-200' : 'hover:bg-muted'}`}
           >
-            {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            <span>Export PDF</span>
+            {exportingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isFreePlan ? (
+              <Lock className="w-4 h-4 text-red-500" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            <span>Export PDF HD</span>
           </button>
+
+          {/* ZIP Download Button */}
           <button 
             onClick={handleExportZip}
             disabled={exportingZip}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium ${
+              isFreePlan 
+                ? 'bg-muted text-muted-foreground border cursor-not-allowed opacity-60' 
+                : 'bg-primary text-primary-foreground hover:bg-primary/90'
+            }`}
           >
-            {exportingZip ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {exportingZip ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isFreePlan ? (
+              <Lock className="w-4 h-4" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
             <span>Export HTML5 (ZIP)</span>
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-8 flex justify-center items-center">
-        {/* Simple vertical preview for now. react-pageflip can be tricky with dynamic content sizes without fixed dimensions */}
-        <div className="max-w-3xl w-full bg-card shadow-2xl rounded-sm">
+      {/* Free Plan Notice */}
+      {isFreePlan && (
+        <div className="bg-red-50 text-red-700 px-6 py-3 text-sm font-medium border-b border-red-100 flex items-center gap-2 shrink-0">
+          <AlertTriangle className="w-4 h-4" />
+          <span>
+            Offre Gratuite active : Le PDF ci-dessous comporte un filigrane. Les téléchargements propres sont réservés aux abonnés payants.
+          </span>
+          <button onClick={() => navigate('/pricing')} className="underline text-red-900 hover:text-red-950 font-bold ml-auto">
+            Débloquer l'ebook complet
+          </button>
+        </div>
+      )}
+
+      {/* Preview book area */}
+      <div className="flex-1 overflow-auto p-8 flex justify-center items-center relative">
+        <div className="max-w-3xl w-full bg-card shadow-2xl rounded-sm relative overflow-hidden">
+          
+          {/* Watermark overlay on screen for Free plan */}
+          {isFreePlan && (
+            <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+              <div 
+                className="text-red-600/5 text-5xl font-extrabold rotate-[-45deg] whitespace-nowrap uppercase select-none tracking-widest"
+                style={{
+                  position: 'absolute',
+                  top: '20%',
+                  left: '10%',
+                  transform: 'rotate(-45deg)'
+                }}
+              >
+                Aperçu EbookAI
+              </div>
+              <div 
+                className="text-red-600/5 text-5xl font-extrabold rotate-[-45deg] whitespace-nowrap uppercase select-none tracking-widest"
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '20%',
+                  transform: 'rotate(-45deg)'
+                }}
+              >
+                Aperçu EbookAI
+              </div>
+              <div 
+                className="text-red-600/5 text-5xl font-extrabold rotate-[-45deg] whitespace-nowrap uppercase select-none tracking-widest"
+                style={{
+                  position: 'absolute',
+                  top: '80%',
+                  left: '10%',
+                  transform: 'rotate(-45deg)'
+                }}
+              >
+                Aperçu EbookAI
+              </div>
+            </div>
+          )}
+
+          {/* Book content layout */}
           <div className="min-h-[800px] flex flex-col items-center justify-center p-12 text-center bg-slate-900 text-white rounded-t-sm">
             {book.coverUrl && <img src={getFullUrl(book.coverUrl)} alt="Cover" className="max-w-md w-full rounded-md shadow-lg mb-8" />}
             <h1 className="text-5xl font-serif mb-4">{book.title}</h1>
@@ -97,6 +184,44 @@ export default function PreviewPage() {
           ))}
         </div>
       </div>
+
+      {/* Upgrade Quota / Download Modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border rounded-2xl p-6 max-w-md w-full shadow-lg space-y-4">
+            <div className="flex items-center gap-3 text-amber-500">
+              <Lock className="w-10 h-10 shrink-0" />
+              <div>
+                <h3 className="text-lg font-bold">Fonctionnalité Verrouillée</h3>
+                <p className="text-xs text-muted-foreground">Téléchargements réservés aux offres premium.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Le téléchargement des PDF propres (sans filigrane) et des archives HTML5 (ZIP) est réservé aux abonnés Starter ou supérieur.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <button 
+                onClick={() => setShowUpgradeModal(false)}
+                className="px-4 py-2 border rounded-md text-sm hover:bg-muted font-medium"
+              >
+                Rester sur l'offre gratuite
+              </button>
+              <button 
+                onClick={() => {
+                  setShowUpgradeModal(false);
+                  navigate('/pricing');
+                }}
+                className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm hover:bg-primary/90 font-semibold"
+              >
+                Débloquer l'Ebook
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

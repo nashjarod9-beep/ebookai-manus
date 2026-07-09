@@ -1,6 +1,25 @@
+const { marked } = require('marked');
 const { uploadPdfExport } = require('./storage.service');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
-const buildEbookHTML = (book, chapters) => `
+// Configure marked to render safe HTML and handle line breaks correctly
+marked.setOptions({
+  breaks: true,
+  gfm: true
+});
+
+const markdownToHTML = (md) => {
+  if (!md) return '';
+  try {
+    return marked.parse(md);
+  } catch (error) {
+    console.error("Markdown parsing error, fallback to raw text:", error);
+    return md;
+  }
+};
+
+const buildEbookHTML = (book, chapters, userPlan) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -19,6 +38,23 @@ const buildEbookHTML = (book, chapters) => `
       color: #2D3748;
       line-height: 1.6;
       font-size: 15px;
+    }
+
+    /* Watermark for Free Plan */
+    .watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 60px;
+      color: rgba(220, 38, 38, 0.12);
+      z-index: 9999;
+      pointer-events: none;
+      white-space: nowrap;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 4px;
     }
     
     /* Cover Page */
@@ -220,6 +256,9 @@ const buildEbookHTML = (book, chapters) => `
   </style>
 </head>
 <body>
+  <!-- Watermark on all pages for Free Plan -->
+  ${userPlan === 'free' ? '<div class="watermark">Aperçu EbookAI</div>' : ''}
+
   <!-- Cover Page -->
   <div class="cover">
     ${book.coverUrl ? `<img class="cover-img" src="${book.coverUrl}" alt="Cover Image">` : ''}
@@ -274,6 +313,13 @@ const generatePDF = async (book, chapters, userId) => {
   let browser;
   const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
+  // Fetch user plan for watermark logic
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true }
+  });
+  const userPlan = user ? user.plan : 'free';
+
   // Load marked dynamically (pure ES Module compatibility)
   const { marked } = await import('marked');
   marked.setOptions({
@@ -320,8 +366,8 @@ const generatePDF = async (book, chapters, userId) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // Pass pre-processed chapters with contentHTML to buildEbookHTML
-  const html = buildEbookHTML(book, processedChapters);
+  // Pass pre-processed chapters with contentHTML and userPlan to buildEbookHTML
+  const html = buildEbookHTML(book, processedChapters, userPlan);
   await page.setContent(html, { waitUntil: 'load' });
 
   const filename = `ebook_${book.id}_${Date.now()}.pdf`;

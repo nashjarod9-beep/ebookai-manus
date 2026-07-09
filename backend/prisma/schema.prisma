@@ -9,13 +9,17 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  plan         String   @default("free")
-  books        Book[]
-  createdAt    DateTime @default(now())
+  id                String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  passwordHash      String
+  plan              String    @default("free") // "free" | "starter" | "creator" | "business" | "agency"
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+  ebooksConsumed    Int       @default(0)
+  quotaRemaining    Int       @default(0)
+  books             Book[]
+  createdAt         DateTime  @default(now())
 }
 
 model Book {
@@ -38,6 +42,7 @@ model Book {
   targetPages  String?
   additionalInstructions String? // User specific design guidelines
   chapters     Chapter[]
+  marketingAsset MarketingAsset?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -56,4 +61,15 @@ model Chapter {
   audioPath   String?
   modelUsed   String?  // Model used for this chapter
   createdAt   DateTime @default(now())
+}
+
+model MarketingAsset {
+  id           String   @id @default(cuid())
+  bookId       String   @unique
+  book         Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  productSheet String?  @db.Text
+  tiktokScripts String? @db.Text // JSON stringified array of scripts
+  whatsappMsgs  String? @db.Text // JSON stringified array of messages
+  mockupUrl     String?  // FLUX generated mockup image url
+  createdAt    DateTime @default(now())
 }

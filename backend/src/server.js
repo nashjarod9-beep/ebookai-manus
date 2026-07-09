@@ -13,6 +13,7 @@ const ebookRoutes = require('./routes/ebook.routes');
 const chapterRoutes = require('./routes/chapter.routes');
 const aiRoutes = require('./routes/ai.routes');
 const exportRoutes = require('./routes/export.routes');
+const marketingRoutes = require('./routes/marketing.routes');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/ebooks', ebookRoutes);
 app.use('/api/chapters', chapterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/marketing', marketingRoutes);
 
 // Error Handler
 app.use(errorHandler);

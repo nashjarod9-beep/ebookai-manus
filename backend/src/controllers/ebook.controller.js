@@ -33,6 +33,14 @@ const getEbookById = async (req, res, next) => {
 
 const createEbook = async (req, res, next) => {
   try {
+    const { plan, quotaRemaining } = req.user;
+    
+    if (plan !== 'free' && quotaRemaining <= 0) {
+      return res.status(403).json({
+        message: "Votre quota mensuel d'ebooks est épuisé. Veuillez passer à l'offre supérieure pour continuer."
+      });
+    }
+
     const { title, subject, description, language, format, outline, author, contactInfo, targetPages, additionalInstructions } = req.body;
     const book = await prisma.book.create({
       data: {
@@ -49,6 +57,17 @@ const createEbook = async (req, res, next) => {
         userId: req.user.id
       }
     });
+
+    if (plan !== 'free') {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: {
+          quotaRemaining: { decrement: 1 },
+          ebooksConsumed: { increment: 1 }
+        }
+      });
+    }
+
     res.status(201).json(book);
   } catch (error) {
     next(error);
