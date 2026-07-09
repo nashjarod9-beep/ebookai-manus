@@ -4,7 +4,7 @@ import { useEbook } from '../hooks/useEbook';
 import api from '../lib/axios';
 import { 
   ArrowLeft, Save, Copy, FileText, Download, Loader2, 
-  Check, Plus, Trash2, Globe, HelpCircle, Gift, Sparkles 
+  Check, Plus, Trash2, Globe, HelpCircle, Gift, Sparkles, Image as ImageIcon, Wand2
 } from 'lucide-react';
 
 export default function ProductSheetPage() {
@@ -41,6 +41,31 @@ export default function ProductSheetPage() {
     }
   });
 
+  const [mockups, setMockups] = useState({ mockupUrl1: null, mockupUrl2: null, mockupUrl3: null });
+  const [generatingMockup, setGeneratingMockup] = useState({ 1: false, 2: false, 3: false });
+
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
+  };
+
+  const handleGenerateMockup = async (variantId) => {
+    setGeneratingMockup(prev => ({ ...prev, [variantId]: true }));
+    try {
+      const { data } = await api.post('/marketing/mockup', { bookId, variantId });
+      setMockups(prev => ({
+        ...prev,
+        [`mockupUrl${variantId}`]: data[`mockupUrl${variantId}`]
+      }));
+    } catch (e) {
+      console.error(e);
+      alert(`Erreur lors de la génération du mockup ${variantId}`);
+    } finally {
+      setGeneratingMockup(prev => ({ ...prev, [variantId]: false }));
+    }
+  };
+
   useEffect(() => {
     loadProductSheet();
   }, [bookId]);
@@ -49,11 +74,18 @@ export default function ProductSheetPage() {
     setLoading(true);
     try {
       const { data } = await api.get(`/marketing/assets/${bookId}`);
-      if (data && data.productSheet) {
-        setSheetData(JSON.parse(data.productSheet));
-      } else {
-        // If not generated, trigger initial generation
-        await handleGenerate();
+      if (data) {
+        if (data.productSheet) {
+          setSheetData(JSON.parse(data.productSheet));
+        } else {
+          // If not generated, trigger initial generation
+          await handleGenerate();
+        }
+        setMockups({
+          mockupUrl1: data.mockupUrl1,
+          mockupUrl2: data.mockupUrl2,
+          mockupUrl3: data.mockupUrl3
+        });
       }
     } catch (e) {
       console.error(e);
@@ -552,6 +584,70 @@ ${sheetData.cta}
             </div>
           </div>
 
+          {/* Section: Mockups */}
+          <div className="space-y-4 border-t pt-6 pb-6">
+            <h3 className="text-md font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-emerald-500" /> Visuels 3D & Mockups Publicitaires
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              Générez et gérez les trois variantes de mockups 3D pour la promotion de votre ebook.
+            </p>
+            <div className="space-y-4">
+              {[
+                { id: 1, label: "Variante 1 : Livre posé sur une table", url: mockups.mockupUrl1 },
+                { id: 2, label: "Variante 2 : Livre tenu dans une main", url: mockups.mockupUrl2 },
+                { id: 3, label: "Variante 3 : Livre à côté d'un ordinateur portable", url: mockups.mockupUrl3 }
+              ].map((variant) => (
+                <div key={variant.id} className="p-4 border rounded-xl bg-muted/20 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-700">{variant.label}</span>
+                    {variant.url && (
+                      <button 
+                        onClick={() => handleGenerateMockup(variant.id)}
+                        disabled={generatingMockup[variant.id]}
+                        className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 disabled:opacity-50"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" /> Régénérer
+                      </button>
+                    )}
+                  </div>
+                  
+                  {variant.url ? (
+                    <div className="relative rounded-lg overflow-hidden border bg-background flex flex-col items-center">
+                      <img src={getFullUrl(variant.url)} alt={variant.label} className="w-full max-h-48 object-cover" />
+                      <div className="absolute top-2 right-2 flex gap-1.5">
+                        <a 
+                          href={getFullUrl(variant.url)} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="p-1.5 bg-background/80 hover:bg-background rounded-md shadow-md text-slate-700 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 border border-dashed rounded-lg text-center bg-background space-y-3">
+                      <p className="text-xs text-muted-foreground">Aucun visuel généré pour cette variante.</p>
+                      <button
+                        onClick={() => handleGenerateMockup(variant.id)}
+                        disabled={generatingMockup[variant.id]}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold rounded transition-colors disabled:opacity-50"
+                      >
+                        {generatingMockup[variant.id] ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Wand2 className="w-3 h-3" />
+                        )}
+                        <span>Générer avec l'IA</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* Right Column: Live Sales Page Preview */}
@@ -637,6 +733,26 @@ ${sheetData.cta}
                 </ul>
               </div>
             </div>
+
+            {/* Mockups Display Gallery */}
+            {(mockups.mockupUrl1 || mockups.mockupUrl2 || mockups.mockupUrl3) && (
+              <div className="border-t pt-8 space-y-6">
+                <h3 className="text-lg font-serif font-bold text-slate-800 flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-emerald-500" /> ✨ Aperçu des Visuels 3D Inclus
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {[
+                    { url: mockups.mockupUrl1, label: "Livre Table" },
+                    { url: mockups.mockupUrl2, label: "Livre Main" },
+                    { url: mockups.mockupUrl3, label: "Livre PC" }
+                  ].map((m, idx) => m.url && (
+                    <div key={idx} className="relative rounded-xl overflow-hidden border shadow-sm bg-muted flex flex-col items-center">
+                      <img src={getFullUrl(m.url)} alt={m.label} className="w-full h-auto object-cover max-h-[150px]" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* FAQ Preview */}
             <div className="border-t pt-8 space-y-6">

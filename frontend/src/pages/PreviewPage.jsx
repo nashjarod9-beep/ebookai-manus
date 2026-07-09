@@ -15,6 +15,26 @@ export default function PreviewPage() {
   const [exportingZip, setExportingZip] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
+  const formatMarkdown = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/\r\n/g, '\n')
+      .split('\n')
+      .map(line => line.trim())
+      .reduce((acc, line) => {
+        if (!acc) return line;
+        const prevLine = acc.slice(acc.lastIndexOf('\n') + 1).trim();
+        if (!prevLine || !line) return acc + '\n' + line;
+        if (/^(?:#+|-|\*|>|\d+\.)\s/.test(line)) {
+          return acc + '\n\n' + line;
+        }
+        if (/[.!?]$/.test(prevLine)) {
+          return acc + '\n\n' + line;
+        }
+        return acc + '\n\n' + line;
+      }, '');
+  };
+
   const getFullUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -122,7 +142,7 @@ export default function PreviewPage() {
 
       {/* Preview book area */}
       <div className="flex-1 overflow-auto p-8 flex justify-center items-center relative">
-        <div className="max-w-3xl w-full bg-card shadow-2xl rounded-sm relative overflow-hidden">
+        <div className="max-w-3xl w-full bg-white text-slate-900 shadow-2xl rounded-sm relative overflow-hidden">
           
           {/* Watermark overlay on screen for Free plan */}
           {isFreePlan && (
@@ -217,8 +237,8 @@ export default function PreviewPage() {
                 </div>
               )}
               
-              <div className="text-slate-700 text-lg leading-relaxed space-y-6 whitespace-pre-line text-justify font-sans">
-                <ReactMarkdown>{ch.content}</ReactMarkdown>
+              <div className="text-slate-800 text-lg leading-relaxed space-y-6 text-justify font-sans">
+                <ReactMarkdown>{formatMarkdown(ch.content)}</ReactMarkdown>
               </div>
             </div>
           ))}

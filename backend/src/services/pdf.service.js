@@ -43,48 +43,76 @@ const buildEbookHTML = (book, chapters, userPlan) => `
     /* Cover Page */
     .cover {
       page-break-after: always;
+      position: relative;
+      width: 100%;
+      height: 98vh;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 92vh;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: #ffffff !important;
       text-align: center;
-      font-family: 'Playfair Display', serif;
-      padding: 20px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+    .cover-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%);
+      z-index: 1;
+    }
+    .cover-content {
+      position: relative;
+      z-index: 2;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
       box-sizing: border-box;
     }
     .cover-title {
-      font-size: 42px;
-      font-weight: 700;
-      color: #1A202C;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      line-height: 1.2;
+      font-size: 46px;
+      font-weight: 800;
+      color: #ffffff !important;
+      margin: 0 0 15px 0;
+      line-height: 1.25;
+      font-family: 'Playfair Display', serif;
+      max-width: 90%;
     }
     .cover-subtitle {
       font-size: 18px;
-      color: #718096;
-      margin-bottom: 30px;
+      color: rgba(255, 255, 255, 0.9) !important;
+      margin: 0 0 40px 0;
       font-style: italic;
       font-family: 'Inter', sans-serif;
       max-width: 80%;
+      line-height: 1.4;
     }
-    .cover-img {
-      width: 100%;
-      max-width: 90%;
-      height: 480px;
-      object-fit: cover;
-      border-radius: 12px;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05);
-      margin-bottom: 30px;
+    .cover-divider {
+      width: 80px;
+      height: 3px;
+      background-color: #3182ce;
+      margin: 20px 0;
+      border-radius: 2px;
     }
     .cover-author {
       font-family: 'Inter', sans-serif;
-      font-size: 15px;
+      font-size: 16px;
       text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #2B6CB0;
+      letter-spacing: 3px;
+      color: #63b3ed !important;
       font-weight: 700;
+      margin-top: auto;
     }
     
     /* Table of Contents */
@@ -243,11 +271,14 @@ const buildEbookHTML = (book, chapters, userPlan) => `
   ${userPlan === 'free' ? '<div class="watermark">Aperçu EbookAI</div>' : ''}
 
   <!-- Cover Page -->
-  <div class="cover">
-    ${book.coverUrl ? `<img class="cover-img" src="${book.coverUrl}" alt="Cover Image">` : ''}
-    <div class="cover-title">${book.title}</div>
-    <div class="cover-subtitle">${book.description || ''}</div>
-    <div class="cover-author">Par ${book.author || 'EbookAI'}</div>
+  <div class="cover" style="${book.coverUrl ? `background-image: url('${book.coverUrl}');` : 'background-color: #1A202C;' }">
+    <div class="cover-overlay"></div>
+    <div class="cover-content">
+      <h1 class="cover-title">${book.title}</h1>
+      <div class="cover-divider"></div>
+      <p class="cover-subtitle">${book.description || book.subject || ''}</p>
+      <div class="cover-author">Par ${book.author || 'EbookAI'}</div>
+    </div>
   </div>
   
   <!-- Table of Contents -->
