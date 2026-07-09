@@ -220,26 +220,28 @@ const generatePDF = async (book, chapters, userId) => {
   const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
   if (isProd) {
-    const puppeteerCore = require('puppeteer-core');
+    const { chromium: playwrightChromium } = require('playwright-core');
     const chromium = require('@sparticuz/chromium');
-    browser = await puppeteerCore.launch({
+    
+    browser = await playwrightChromium.launch({
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
       headless: chromium.headless,
-      ignoreHTTPSErrors: true,
     });
   } else {
-    const puppeteer = require('puppeteer');
-    browser = await puppeteer.launch({
+    const { chromium: playwrightChromium } = require('playwright-core');
+    browser = await playwrightChromium.launch({
+      headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      headless: 'new'
+      channel: 'chrome' // Uses locally installed Google Chrome
     });
   }
-  const page = await browser.newPage();
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
   const html = buildEbookHTML(book, chapters);
-  await page.setContent(html, { waitUntil: 'networkidle0' });
+  await page.setContent(html, { waitUntil: 'load' });
 
   const filename = `ebook_${book.id}_${Date.now()}.pdf`;
 
@@ -247,7 +249,7 @@ const generatePDF = async (book, chapters, userId) => {
     format: 'A4',
     printBackground: true,
     displayHeaderFooter: true,
-    headerTemplate: '<div></div>', // empty header
+    headerTemplate: '<div></div>', // Empty header
     footerTemplate: `
       <div style="font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-size: 9px; width: 100%; display: flex; justify-content: space-between; padding: 0 20mm; color: #A0AEC0;">
         <span>${book.title}</span>
