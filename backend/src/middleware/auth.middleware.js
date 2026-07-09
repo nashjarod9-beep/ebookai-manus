@@ -28,15 +28,16 @@ const protect = async (req, res, next) => {
       });
 
       if (user) {
-        if (user.email === 'nashjarod9@gmail.com') {
-          user.plan = 'agency';
-          user.quotaRemaining = 9999;
-          user.ebooksConsumed = 0;
-          user.subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        let userCopy = { ...user };
+        if (userCopy.email === 'nashjarod9@gmail.com') {
+          userCopy.plan = 'agency';
+          userCopy.quotaRemaining = 9999;
+          userCopy.ebooksConsumed = 0;
+          userCopy.subscriptionEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         }
 
         const now = new Date();
-        const needsRenewal = !user.subscriptionEnd || now > new Date(user.subscriptionEnd);
+        const needsRenewal = !userCopy.subscriptionEnd || now > new Date(userCopy.subscriptionEnd);
 
         if (needsRenewal) {
           const limits = {
@@ -46,14 +47,14 @@ const protect = async (req, res, next) => {
             business: 25,
             agency: 60
           };
-          const planLimit = limits[user.plan] || 0;
+          const planLimit = limits[userCopy.plan] || 0;
           
           const start = new Date();
           const end = new Date();
           end.setDate(start.getDate() + 30);
 
           req.user = await prisma.user.update({
-            where: { id: user.id },
+            where: { id: userCopy.id },
             data: {
               subscriptionStart: start,
               subscriptionEnd: end,
@@ -72,7 +73,7 @@ const protect = async (req, res, next) => {
             }
           });
         } else {
-          req.user = user;
+          req.user = userCopy;
         }
         next();
       } else {
