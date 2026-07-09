@@ -22,6 +22,7 @@ router.get('/product-sheet/pdf/:bookId', exportProductSheetPdf);
 router.post('/tiktok-scripts', generateTikTokScripts);
 router.post('/whatsapp-msgs', generateWhatsAppMessages);
 router.post('/social-scripts/update', updateSocialMarketing);
+router.post('/mockup', generateMockupVariant);
 router.post('/mockup/generate-variant', generateMockupVariant);
 
 module.exports = router;
