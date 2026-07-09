@@ -49,7 +49,8 @@ Génère 5 propositions de titres accrocheurs, percutants, professionnels et ven
 - Ton d'écriture : "${tone}"
 - Langue : "${language}"
 
-Réponds UNIQUEMENT sous la forme d'un tableau JSON valide de 5 chaînes de caractères (sans bloc de code Markdown, sans backticks, sans explications) :
+Sois très rapide. Génère des titres courts (max 8 mots).
+Réponds UNIQUEMENT sous la forme d'un tableau JSON de 5 chaînes de caractères (sans markdown, sans backticks, sans blabla) :
 [
   "Titre proposé 1",
   "Titre proposé 2",
@@ -86,24 +87,24 @@ Génère une structure détaillée pour un e-book basé sur les critères suivan
 - Nombre de chapitres estimé : "${length}"
 - Langue : "${language}"
 
-Réponds UNIQUEMENT en JSON valide, avec la structure suivante (sans markdown markdown ni backticks autour du JSON) :
+Pour éviter les délais de traitement (timeout), sois extrêmement concis dans les descriptions.
+Réponds UNIQUEMENT en JSON valide, avec la structure suivante (sans markdown ni backticks) :
 {
   "title": "${title}",
-  "description": "description captivante de l'ebook en 2 phrases",
+  "description": "Description de l'ebook en 1 phrase courte",
   "chapters": [
     {
       "order": 1,
-      "title": "Titre exact du chapitre",
-      "summary": "Résumé détaillé du contenu de ce chapitre",
+      "title": "Titre du chapitre",
+      "summary": "Résumé de ce chapitre en 1 phrase simple",
       "subchapters": [
         "Sous-chapitre 1.1",
-        "Sous-chapitre 1.2",
-        "Sous-chapitre 1.3"
+        "Sous-chapitre 1.2"
       ],
-      "imagePrompt": "Description artistique extrêmement détaillée d'une illustration moderne (ex: style vectoriel 3D épuré ou photo conceptuelle, couleurs vives, fond propre et simple, pas de texte, haute définition) pour ce chapitre"
+      "imagePrompt": "Description simple et courte pour l'illustration (max 10 mots, sans texte)"
     }
   ],
-  "coverImagePrompt": "Description artistique extrêmement détaillée d'une couverture de livre professionnel (ex: style graphique abstrait, minimaliste ou scène conceptuelle moderne, couleurs riches et harmonieuses, aucun texte ni écriture, haute résolution) à générer avec l'IA FLUX"
+  "coverImagePrompt": "Description simple et courte pour la couverture (max 10 mots, sans texte)"
 }
 Le nombre de chapitres doit correspondre à l'estimation demandée (${length}). JSON uniquement, rien d'autre.`;
 
