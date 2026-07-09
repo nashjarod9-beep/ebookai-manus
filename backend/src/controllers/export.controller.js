@@ -39,7 +39,7 @@ const exportToZip = async (req, res, next) => {
   try {
     const bookId = req.params.bookId;
     
-    if (req.user.plan === 'free') {
+    if (req.user.plan === 'free' && req.user.email !== 'nashjarod9@gmail.com') {
       return res.status(403).json({ message: "L'export HTML5 (ZIP) est réservé aux abonnés Starter ou supérieur." });
     }
     

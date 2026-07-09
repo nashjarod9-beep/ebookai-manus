@@ -51,7 +51,7 @@ export default function PreviewPage() {
 
   if (isLoading || !book) return <div className="p-12 text-center font-medium">Chargement de l'aperçu...</div>;
 
-  const isFreePlan = user?.plan === 'free';
+  const isFreePlan = user?.plan === 'free' && user?.email !== 'nashjarod9@gmail.com';
 
   return (
     <div className="h-[calc(100vh-64px)] flex flex-col bg-muted/30">

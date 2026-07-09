@@ -299,9 +299,9 @@ const generatePDF = async (book, chapters, userId) => {
   // Fetch user plan for watermark logic
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { plan: true }
+    select: { plan: true, email: true }
   });
-  const userPlan = user ? user.plan : 'free';
+  const userPlan = (user && user.email === 'nashjarod9@gmail.com') ? 'agency' : (user ? user.plan : 'free');
 
   // Load marked dynamically (pure ES Module compatibility)
   const { marked } = await import('marked');

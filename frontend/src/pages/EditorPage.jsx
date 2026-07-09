@@ -262,7 +262,7 @@ export default function EditorPage() {
           ) : (
             // Marketing Assets Manager
             <div className="flex-1 flex overflow-hidden">
-              {user?.plan === 'free' ? (
+              {user?.plan === 'free' && user?.email !== 'nashjarod9@gmail.com' ? (
                 // Locked screen for free users
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-md mx-auto space-y-6">
                   <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center">

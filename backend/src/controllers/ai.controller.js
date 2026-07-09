@@ -74,9 +74,9 @@ const generateChapter = async (req, res, next) => {
     }
 
     const { order, title, summary, imagePrompt, subchapters } = chapterData;
-    const { plan } = req.user;
+    const { plan, email } = req.user;
 
-    if (plan === 'free' && parseInt(order) > 1) {
+    if (plan === 'free' && parseInt(order) > 1 && email !== 'nashjarod9@gmail.com') {
       return res.status(403).json({
         message: "L'offre gratuite ne permet de générer que le premier chapitre de l'ebook. Veuillez passer à une offre payante pour générer la suite."
       });

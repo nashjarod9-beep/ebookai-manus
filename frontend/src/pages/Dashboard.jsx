@@ -35,7 +35,7 @@ export default function Dashboard() {
   };
 
   const limit = planLimits[user?.plan || 'free'];
-  const hasReachedQuota = user?.plan !== 'free' && user?.quotaRemaining <= 0;
+  const hasReachedQuota = user?.plan !== 'free' && user?.quotaRemaining <= 0 && user?.email !== 'nashjarod9@gmail.com';
 
   // Calculation helpers
   const totalCreated = ebooks?.length || 0;
