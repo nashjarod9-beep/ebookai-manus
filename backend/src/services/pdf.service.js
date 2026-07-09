@@ -1,4 +1,3 @@
-const puppeteer = require('puppeteer');
 const { uploadPdfExport } = require('./storage.service');
 
 const markdownToHTML = (md) => {
@@ -217,10 +216,26 @@ const buildEbookHTML = (book, chapters) => `
 `;
 
 const generatePDF = async (book, chapters, userId) => {
-  const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: 'new'
-  });
+  let browser;
+  const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
+  if (isProd) {
+    const puppeteerCore = require('puppeteer-core');
+    const chromium = require('@sparticuz/chromium');
+    browser = await puppeteerCore.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+  } else {
+    const puppeteer = require('puppeteer');
+    browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: 'new'
+    });
+  }
   const page = await browser.newPage();
 
   const html = buildEbookHTML(book, chapters);
