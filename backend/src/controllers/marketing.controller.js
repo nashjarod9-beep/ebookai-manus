@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { generateImage } = require('../services/flux.service');
+const { generateImage } = require('../services/ideogram.service');
 const { downloadImageToBuffer, uploadChapterImage } = require('../services/storage.service');
 
 const getCallAI = async (prompt, isJson = false) => {
@@ -526,7 +526,7 @@ const generateMockupVariant = async (req, res, next) => {
       prompt = `An elegant square sales banner flyer showcasing a 3D book mockup of the cover for "${book.title}" next to a premium laptop on a clean desk. Corporate advertisement aesthetic, sharp focus, warm workspace lighting, 1080x1080 resolution.`;
     }
 
-    const fluxUrl = await generateImage(prompt, 1024, 1024);
+    const fluxUrl = await generateImage(prompt, 'ASPECT_1_1');
     const imageBuffer = await downloadImageToBuffer(fluxUrl);
     const filename = `mockup_v${varId}_${bookId}_${Date.now()}.png`;
     const publicMockupUrl = await uploadChapterImage(imageBuffer, req.user.id, filename);
