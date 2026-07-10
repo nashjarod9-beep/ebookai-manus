@@ -8,8 +8,8 @@ const generateImage = async (prompt, width = 1024, height = 768) => {
     console.log(`Initialisation de la génération d'image FLUX... Prompt: "${prompt.substring(0, 60)}..."`);
     
     // Step 1: Submit the task
-    // We use the flagship flux-pro-1.1 model endpoint
-    const response = await fetch('https://api.bfl.ai/v1/flux-pro-1.1', {
+    // We use the flagship FLUX.2 Pro model endpoint
+    const response = await fetch('https://api.bfl.ai/v1/flux-2-pro', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
