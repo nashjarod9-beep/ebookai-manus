@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { generateImage } = require('../services/ideogram.service');
+const { generateImage: generateImageIdeogram } = require('../services/ideogram.service');
 const { downloadImageToBuffer, uploadChapterImage } = require('../services/storage.service');
 
 const getCallAI = async (prompt, isJson = false) => {
@@ -526,8 +526,17 @@ const generateMockupVariant = async (req, res, next) => {
       prompt = `An elegant square sales banner flyer showcasing a 3D book mockup of the cover for "${book.title}" next to a premium laptop on a clean desk. Corporate advertisement aesthetic, sharp focus, warm workspace lighting, 1080x1080 resolution.`;
     }
 
-    const fluxUrl = await generateImage(prompt, 'ASPECT_1_1');
-    const imageBuffer = await downloadImageToBuffer(fluxUrl);
+    let imageUrl;
+    try {
+      console.log("Tentative de génération du mockup avec Ideogram Turbo 4...");
+      imageUrl = await generateImageIdeogram(prompt, 'ASPECT_1_1');
+    } catch (ideogramError) {
+      console.warn(`Échec de la génération avec Ideogram: ${ideogramError.message}. Bascule automatique sur FLUX.2 Pro...`);
+      const { generateImage: generateImageFlux } = require('../services/flux.service');
+      imageUrl = await generateImageFlux(prompt, 1024, 1024);
+    }
+
+    const imageBuffer = await downloadImageToBuffer(imageUrl);
     const filename = `mockup_v${varId}_${bookId}_${Date.now()}.png`;
     const publicMockupUrl = await uploadChapterImage(imageBuffer, req.user.id, filename);
 
