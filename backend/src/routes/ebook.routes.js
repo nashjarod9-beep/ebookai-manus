@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getEbooks, getEbookById, createEbook, updateEbook, deleteEbook, duplicateEbook } = require('../controllers/ebook.controller');
+const { getEbooks, getEbookById, createEbook, updateEbook, deleteEbook, duplicateEbook, getEbookProgressSSE } = require('../controllers/ebook.controller');
 const { protect } = require('../middleware/auth.middleware');
 
 router.route('/')
@@ -8,6 +8,8 @@ router.route('/')
   .post(protect, createEbook);
 
 router.post('/duplicate/:id', protect, duplicateEbook);
+
+router.get('/:id/progress', protect, getEbookProgressSSE);
 
 router.route('/:id')
   .get(protect, getEbookById)

@@ -72,6 +72,9 @@ const getMarketingAssets = async (req, res, next) => {
 const generateProductSheet = async (req, res, next) => {
   try {
     const { bookId } = req.body;
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'marketing_sheet', 'Création de la page de vente et de la fiche produit...');
+
     const book = await prisma.book.findUnique({ where: { id: bookId }, include: { chapters: true } });
     
     if (!book || book.userId !== req.user.id) {
@@ -134,6 +137,8 @@ La fiche produit doit répondre EXACTEMENT à ce format JSON valide (sans explic
       update: { productSheet: cleanContent },
       create: { bookId, productSheet: cleanContent }
     });
+
+    updateProgress(bookId, 'marketing_sheet_done', '✓ Fiche produit rédigée');
 
     res.json(asset);
   } catch (error) {
@@ -382,6 +387,9 @@ const exportProductSheetPdf = async (req, res, next) => {
 const generateTikTokScripts = async (req, res, next) => {
   try {
     const { bookId } = req.body;
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'marketing_tiktok', 'Génération des 10 scripts viraux TikTok / Reels...');
+
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
@@ -424,6 +432,8 @@ Réponds obligatoirement au format JSON valide, sous la forme d'un tableau d'obj
       create: { bookId, tiktokScripts: cleanContent }
     });
 
+    updateProgress(bookId, 'marketing_tiktok_done', '✓ Scripts TikTok créés');
+
     res.json(asset);
   } catch (error) {
     next(error);
@@ -433,6 +443,9 @@ Réponds obligatoirement au format JSON valide, sous la forme d'un tableau d'obj
 const generateWhatsAppMessages = async (req, res, next) => {
   try {
     const { bookId } = req.body;
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'marketing_whatsapp', 'Rédaction des messages de vente WhatsApp...');
+
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
@@ -499,6 +512,8 @@ const updateSocialMarketing = async (req, res, next) => {
       create: { bookId, ...dataToUpdate }
     });
 
+    updateProgress(bookId, 'marketing_whatsapp_done', '✓ Messages WhatsApp rédigés');
+
     res.json(asset);
   } catch (error) {
     next(error);
@@ -508,13 +523,16 @@ const updateSocialMarketing = async (req, res, next) => {
 const generateMockupVariant = async (req, res, next) => {
   try {
     const { bookId, variantId } = req.body;
+    const { updateProgress } = require('../services/progress.service');
+    const varId = parseInt(variantId);
+    updateProgress(bookId, `mockup_${varId}`, `Génération du mockup publicitaire 3D variante ${varId}...`);
+
     const book = await prisma.book.findUnique({ where: { id: bookId } });
     
     if (!book || book.userId !== req.user.id) {
       return res.status(403).json({ message: 'Accès refusé' });
     }
 
-    const varId = parseInt(variantId);
     console.log(`Génération mockup variante ${varId} pour l'ebook ${bookId}...`);
 
     let prompt = '';
@@ -546,6 +564,8 @@ const generateMockupVariant = async (req, res, next) => {
       update: { [updateField]: publicMockupUrl },
       create: { bookId, [updateField]: publicMockupUrl }
     });
+
+    updateProgress(bookId, `mockup_${varId}_done`, `✓ Mockup variante ${varId} généré`, { mockupUrl: publicMockupUrl });
 
     res.json(asset);
   } catch (error) {

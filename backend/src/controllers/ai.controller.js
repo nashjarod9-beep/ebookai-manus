@@ -44,10 +44,13 @@ const generateCover = async (req, res, next) => {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
-    console.log(`Génération de la couverture pour le livre ${bookId}...`);
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'cover', 'Génération de la couverture avec l\'IA FLUX...');
+    
     // Generate image via FLUX (cover aspect ratio 3:4)
     const fluxUrl = await generateImage(coverImagePrompt, 768, 1024);
     
+    updateProgress(bookId, 'cover_download', 'Téléchargement et optimisation de la couverture...');
     // Download image from FLUX temporary URL and upload to Supabase Storage
     const imageBuffer = await downloadImageToBuffer(fluxUrl);
     const filename = `cover_${bookId}_${Date.now()}.png`;
@@ -58,6 +61,8 @@ const generateCover = async (req, res, next) => {
       where: { id: bookId },
       data: { coverUrl: publicCoverUrl }
     });
+
+    updateProgress(bookId, 'cover_done', '✓ Couverture générée', { coverUrl: publicCoverUrl });
 
     res.json({ coverUrl: publicCoverUrl });
   } catch (error) {
@@ -104,10 +109,14 @@ const generateChapter = async (req, res, next) => {
       additionalInstructions: ebookData.additionalInstructions || book.additionalInstructions
     };
 
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'chapter_writing', `Rédaction du chapitre ${order} : "${title}"...`, { order: parseInt(order), title });
+
     console.log(`Génération du contenu textuel pour le chapitre ${order} : "${title}"...`);
     // 1. Generate text via DeepSeek (or Qwen fallback)
     const { content, modelUsed } = await generateChapterContent({ order, title, summary, subchapters }, bookContext);
 
+    updateProgress(bookId, 'chapter_illustration', `Génération de l'illustration pour le chapitre ${order}...`, { order: parseInt(order), title });
     console.log(`Génération de l'illustration pour le chapitre ${order} : "${imagePrompt.substring(0, 40)}..."`);
     // 2. Generate chapter illustration via FLUX (aspect ratio 4:3)
     let publicImageUrl = null;
@@ -153,6 +162,8 @@ const generateChapter = async (req, res, next) => {
       where: { id: bookId },
       data: { status: 'generating' }
     });
+
+    updateProgress(bookId, 'chapter_done', `✓ Chapitre ${order} terminé`, { order: parseInt(order), title, chapterText: content, imageUrl: publicImageUrl || null });
 
     res.json(savedChapter);
   } catch (error) {

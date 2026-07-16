@@ -11,6 +11,13 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
+  } catch (err) {}
+  } else if (req.query.token) {
+    token = req.query.token;
+  }
+
+  if (token) {
+    try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
 
       const user = await prisma.user.findUnique({

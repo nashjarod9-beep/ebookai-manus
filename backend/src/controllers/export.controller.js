@@ -16,6 +16,9 @@ const exportToPdf = async (req, res, next) => {
       return res.status(401).json({ message: 'Non autorisé' });
     }
 
+    const { updateProgress } = require('../services/progress.service');
+    updateProgress(bookId, 'pdf', 'Compilation PDF et mise en page professionnelle...');
+
     const pdfPath = await generatePDF(book, book.chapters, req.user.id);
     
     // Save path to DB
@@ -23,6 +26,8 @@ const exportToPdf = async (req, res, next) => {
       where: { id: bookId },
       data: { pdfPath }
     });
+
+    updateProgress(bookId, 'pdf_done', '✓ Ebook PDF compilé', { pdfPath });
 
     res.json({ pdfPath });
   } catch (error) {

@@ -163,11 +163,51 @@ const duplicateEbook = async (req, res, next) => {
   }
 };
 
+const { progressEmitter, getProgressCache } = require('../services/progress.service');
+
+const getEbookProgressSSE = async (req, res, next) => {
+  try {
+    const bookId = req.params.id;
+    const book = await prisma.book.findUnique({
+      where: { id: bookId }
+    });
+
+    if (!book || book.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const listener = (data) => {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Send current cached progress first
+    const current = getProgressCache(bookId);
+    if (current) {
+      res.write(`data: ${JSON.stringify(current)}\n\n`);
+    }
+
+    progressEmitter.on(`progress:${bookId}`, listener);
+
+    req.on('close', () => {
+      progressEmitter.off(`progress:${bookId}`, listener);
+    });
+  } catch (error) {
+    console.error("SSE progress endpoint error:", error);
+    res.end();
+  }
+};
+
 module.exports = {
   getEbooks,
   getEbookById,
   createEbook,
   updateEbook,
   deleteEbook,
-  duplicateEbook
+  duplicateEbook,
+  getEbookProgressSSE
 };
