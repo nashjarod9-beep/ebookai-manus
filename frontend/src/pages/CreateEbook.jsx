@@ -479,7 +479,7 @@ export default function CreateEbook() {
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-6xl">
+    <div className="container mx-auto px-4 md:px-6 py-8 md:py-10 max-w-6xl">
       
       {/* Restore Draft Alert Banner */}
       {showRestoreModal && (
@@ -547,7 +547,7 @@ export default function CreateEbook() {
             </div>
           </div>
 
-          <Card className="p-6 bg-surface-1/20 border border-white/5 shadow-2xl">
+          <Card className="p-4 md:p-6 bg-surface-1/20 border border-white/5 shadow-2xl">
             {/* Step 1: Conversational Chat-like form */}
             {step === 1 && (
               <div className="space-y-6 text-left">

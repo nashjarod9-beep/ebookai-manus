@@ -134,7 +134,7 @@ export default function Dashboard() {
       initial="initial"
       animate="animate"
       variants={staggerChildren}
-      className="container mx-auto px-6 py-10 max-w-7xl space-y-10"
+      className="container mx-auto px-4 py-8 md:px-6 md:py-10 max-w-7xl space-y-10"
     >
       
       {/* 1. Header Cockpit */}

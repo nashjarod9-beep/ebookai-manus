@@ -12,6 +12,8 @@ import ProductSheetPage from './pages/ProductSheetPage';
 import MarketingVisualsPage from './pages/MarketingVisualsPage';
 import MarketingContentPage from './pages/MarketingContentPage';
 import DesignPreview from './pages/DesignPreview';
+import BottomTabBar from './components/BottomTabBar';
+import FloatingCreateButton from './components/FloatingCreateButton';
 import { useAuth } from './hooks/useAuth';
 
 function PrivateRoute({ children }) {
@@ -22,7 +24,7 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="min-h-screen bg-background text-foreground flex flex-col pb-16 md:pb-0">
         <Navbar />
         <main className="flex-1">
           <Routes>
@@ -41,6 +43,8 @@ function App() {
             <Route path="/design-preview" element={<DesignPreview />} />
           </Routes>
         </main>
+        <FloatingCreateButton />
+        <BottomTabBar />
       </div>
     </Router>
   );

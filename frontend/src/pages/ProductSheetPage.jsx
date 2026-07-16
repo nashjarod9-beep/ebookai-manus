@@ -306,18 +306,18 @@ ${sheetData.cta}
     <div className="h-[calc(100vh-64px)] flex flex-col bg-muted/10">
       
       {/* Top Header */}
-      <div className="h-14 border-b bg-card flex items-center justify-between px-6 shrink-0 shadow-sm">
+      <div className="min-h-14 py-3 border-b border-white/5 bg-surface-1 flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 shrink-0 gap-4 shadow-md">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-muted rounded-md">
+          <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-lg">Fiche Commerciale : {book?.title}</h1>
+          <h1 className="font-bold text-lg text-white font-serif">Fiche Commerciale : {book?.title}</h1>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button 
             onClick={handleCopyText} 
-            className="flex items-center gap-2 px-3 py-1.5 border rounded-lg hover:bg-muted text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 border border-white/10 rounded-xl hover:bg-white/5 text-xs font-semibold text-white transition-colors"
           >
             {copySuccess ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
             <span>{copySuccess ? 'Copié !' : 'Copier'}</span>
@@ -325,25 +325,25 @@ ${sheetData.cta}
           
           <button 
             onClick={handleDownloadWord} 
-            className="flex items-center gap-2 px-3 py-1.5 border rounded-lg hover:bg-muted text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 border border-white/10 rounded-xl hover:bg-white/5 text-xs font-semibold text-white transition-colors"
           >
-            <FileText className="w-4 h-4 text-blue-500" />
+            <FileText className="w-4 h-4 text-blue-400" />
             <span>Word (.doc)</span>
           </button>
 
           <button 
             onClick={handleDownloadPdf}
             disabled={exportingPdf}
-            className="flex items-center gap-2 px-3 py-1.5 border rounded-lg hover:bg-muted text-sm font-semibold transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-1.5 border border-white/10 rounded-xl hover:bg-white/5 text-xs font-semibold text-white transition-colors disabled:opacity-50"
           >
-            {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-red-500" />}
+            {exportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-brand-error" />}
             <span>PDF</span>
           </button>
 
           <button 
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 text-sm font-semibold transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-1.5 bg-brand-primary text-white rounded-xl hover:bg-brand-primary/95 text-xs font-semibold transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>Enregistrer</span>
@@ -352,10 +352,10 @@ ${sheetData.cta}
       </div>
 
       {/* Main Form + Preview Grid */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-surface-0">
         
         {/* Left Column: Form Editors */}
-        <div className="w-1/2 border-r bg-background overflow-y-auto p-6 space-y-6">
+        <div className="w-full lg:w-1/2 lg:border-r border-white/5 bg-surface-0 overflow-y-auto p-6 space-y-6">
           
           {/* Section: Général */}
           <div className="space-y-4 border-b pb-6">
@@ -651,84 +651,84 @@ ${sheetData.cta}
         </div>
 
         {/* Right Column: Live Sales Page Preview */}
-        <div className="w-1/2 bg-muted/5 overflow-y-auto p-8 max-w-none">
-          <div className="bg-card shadow-2xl rounded-2xl border p-12 space-y-10 max-w-2xl mx-auto">
+        <div className="w-full lg:w-1/2 bg-surface-1/20 overflow-y-auto p-6 lg:p-8 max-w-none border-t lg:border-t-0 border-white/5">
+          <div className="bg-surface-1/40 shadow-2xl rounded-2xl border border-white/5 p-6 md:p-10 space-y-10 max-w-2xl mx-auto text-left">
             {/* Header / Hero */}
-            <div className="text-center border-b pb-8 space-y-4">
-              <span className="text-xs font-bold uppercase tracking-widest text-primary px-3.5 py-1.5 bg-primary/10 rounded-full">
+            <div className="text-center border-b border-white/5 pb-8 space-y-4">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-brand-accent px-3.5 py-1.5 bg-brand-accent/15 rounded-full">
                 Offre Spéciale Ebook
               </span>
-              <h1 className="text-4xl font-serif font-extrabold text-slate-800 leading-tight pt-2">{sheetData.commercialName || "Titre de Vente"}</h1>
-              <div className="w-16 h-1 bg-amber-500 mx-auto my-2 rounded-full"></div>
-              <p className="text-xl text-amber-600 font-semibold italic max-w-md mx-auto leading-relaxed">"{sheetData.promise || "Votre phrase d'accroche..."}"</p>
+              <h1 className="text-3xl font-serif font-extrabold text-white leading-tight pt-2">{sheetData.commercialName || "Titre de Vente"}</h1>
+              <div className="w-16 h-1 bg-brand-accent mx-auto my-2 rounded-full"></div>
+              <p className="text-lg text-brand-accent font-semibold italic max-w-md mx-auto leading-relaxed">"{sheetData.promise || "Votre phrase d'accroche..."}"</p>
             </div>
 
             {/* Sales Story */}
             <div className="space-y-6">
-              <h3 className="text-xl font-serif font-bold text-slate-800 border-l-4 border-primary pl-3">À propos de cet Ebook</h3>
+              <h3 className="text-lg font-serif font-bold text-white border-l-4 border-brand-primary pl-3">À propos de cet Ebook</h3>
               
-              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line text-justify space-y-4">
+              <div className="text-slate-300 text-xs leading-relaxed whitespace-pre-line text-justify space-y-4">
                 <p>{sheetData.longDescription?.introduction}</p>
               </div>
               
               {/* Problem block (Red style) */}
-              <div className="p-6 bg-red-50/50 border border-red-100 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-red-700 font-bold text-sm">
+              <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-brand-error font-bold text-xs">
                   <span>⚠️ LE CONSTAT (LE PROBLÈME)</span>
                 </div>
-                <p className="text-red-900 text-sm leading-relaxed text-justify">{sheetData.longDescription?.problem}</p>
+                <p className="text-red-200 text-xs leading-relaxed text-justify">{sheetData.longDescription?.problem}</p>
               </div>
 
               {/* Solution block (Green style) */}
-              <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm">
+              <div className="p-6 bg-green-500/10 border border-green-500/20 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-brand-success font-bold text-xs">
                   <span>✅ LA SOLUTION APPORTÉE</span>
                 </div>
-                <p className="text-emerald-900 text-sm leading-relaxed text-justify">{sheetData.longDescription?.solution}</p>
+                <p className="text-green-200 text-xs leading-relaxed text-justify">{sheetData.longDescription?.solution}</p>
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm font-bold text-slate-800">Ce que vous allez concrètement apprendre :</p>
-                <p className="text-slate-600 text-sm leading-relaxed text-justify whitespace-pre-line">{sheetData.longDescription?.whatTheyWillLearn}</p>
+                <p className="text-xs font-bold text-white">Ce que vous allez concrètement apprendre :</p>
+                <p className="text-slate-300 text-xs leading-relaxed text-justify whitespace-pre-line">{sheetData.longDescription?.whatTheyWillLearn}</p>
               </div>
 
-              <div className="p-6 bg-amber-50/20 border border-amber-100 rounded-xl space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Pourquoi cet ebook est unique</p>
-                <p className="text-slate-600 text-sm leading-relaxed text-justify italic">"{sheetData.longDescription?.whyDifferent}"</p>
+              <div className="p-6 bg-brand-primary/10 border border-brand-accent/20 rounded-xl space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-brand-accent">Pourquoi cet ebook est unique</p>
+                <p className="text-slate-300 text-xs leading-relaxed text-justify italic">"{sheetData.longDescription?.whyDifferent}"</p>
               </div>
 
-              <div className="text-slate-600 text-sm leading-relaxed whitespace-pre-line text-justify pt-2">
+              <div className="text-slate-300 text-xs leading-relaxed whitespace-pre-line text-justify pt-2">
                 <p>{sheetData.longDescription?.conclusion}</p>
               </div>
             </div>
 
             {/* Benefits & Bonus Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-8">
-              <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
-                <h3 className="text-md font-bold mb-4 text-slate-800 flex items-center gap-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-8">
+              <div className="bg-white/5 p-6 rounded-xl border border-white/5">
+                <h3 className="text-xs font-bold mb-4 text-white flex items-center gap-1.5 font-serif">
                   <span>💎 Vos Bénéfices</span>
                 </h3>
-                <ul className="space-y-3 text-sm text-slate-600">
+                <ul className="space-y-3 text-xs text-slate-300">
                   {sheetData.benefits?.map((b, i) => (
-                    <li key={i} className="flex gap-2 items-start">
-                      <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
-                      <span className="leading-tight">{b}</span>
-                    </li>
+                     <li key={i} className="flex gap-2 items-start">
+                       <Check className="w-4 h-4 text-brand-success shrink-0 mt-0.5" />
+                       <span className="leading-tight">{b}</span>
+                     </li>
                   ))}
                 </ul>
               </div>
 
-              <div className="bg-emerald-50/20 p-6 rounded-xl border border-emerald-100">
-                <h3 className="text-md font-bold mb-4 text-slate-800 flex items-center gap-1.5">
-                  <Gift className="w-4 h-4 text-emerald-500 shrink-0" />
+              <div className="bg-white/5 p-6 rounded-xl border border-white/5">
+                <h3 className="text-xs font-bold mb-4 text-white flex items-center gap-1.5 font-serif">
+                  <Gift className="w-4 h-4 text-brand-accent shrink-0" />
                   <span>🎁 Bonus Offerts</span>
                 </h3>
-                <ul className="space-y-3 text-sm text-slate-600">
+                <ul className="space-y-3 text-xs text-slate-300">
                   {sheetData.bonus?.map((b, i) => (
-                    <li key={i} className="flex gap-2 items-start">
-                      <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span className="leading-tight">{b}</span>
-                    </li>
+                     <li key={i} className="flex gap-2 items-start">
+                       <Check className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
+                       <span className="leading-tight">{b}</span>
+                     </li>
                   ))}
                 </ul>
               </div>

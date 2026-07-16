@@ -82,82 +82,82 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
     switch (page.type) {
       case 'cover':
         return (
-          <div className="flex flex-col justify-between h-full p-8 bg-gradient-to-b from-surface-2 to-surface-1 rounded-l-2xl border-r border-white/5 relative overflow-hidden">
+          <div className="flex flex-col justify-between h-full p-5 sm:p-8 bg-gradient-to-b from-surface-2 to-surface-1 rounded-l-2xl border-r border-white/5 relative overflow-hidden">
             {page.coverUrl && (
               <div className="absolute inset-0 opacity-15 blur-sm scale-110 pointer-events-none">
                 <img src={getFullUrl(page.coverUrl)} alt="background" className="w-full h-full object-cover" />
               </div>
             )}
-            <div className="text-left space-y-2 z-10">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-accent bg-brand-accent/15 px-2.5 py-0.5 rounded-full">
+            <div className="text-left space-y-1 z-10">
+              <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-brand-accent bg-brand-accent/15 px-2 py-0.5 rounded-full">
                 {page.subject || 'Ebook Premium'}
               </span>
-              <h1 className="text-3xl font-bold font-serif text-white pt-2 leading-tight">
+              <h1 className="text-xl sm:text-3xl font-bold font-serif text-white pt-2 leading-tight">
                 {page.title}
               </h1>
             </div>
-            <div className="my-6 aspect-[3/4] rounded-lg overflow-hidden border border-white/15 shadow-2xl z-10 flex items-center justify-center bg-slate-900">
+            <div className="my-3 sm:my-6 aspect-[3/4] rounded-lg overflow-hidden border border-white/15 shadow-2xl z-10 flex items-center justify-center bg-slate-900 max-h-[160px] sm:max-h-none">
               {page.coverUrl ? (
                 <img src={getFullUrl(page.coverUrl)} alt={page.title} className="w-full h-full object-cover" />
               ) : (
-                <BookOpen className="w-12 h-12 text-slate-700" />
+                <BookOpen className="w-8 h-8 sm:w-12 sm:h-12 text-slate-700" />
               )}
             </div>
-            <div className="text-left border-t border-white/5 pt-4 z-10">
-              <p className="text-xs text-slate-400">Rédigé par</p>
-              <p className="text-sm font-semibold text-white">{page.author}</p>
+            <div className="text-left border-t border-white/5 pt-2 sm:pt-4 z-10">
+              <p className="text-[10px] text-slate-400">Rédigé par</p>
+              <p className="text-xs sm:text-sm font-semibold text-white">{page.author}</p>
             </div>
           </div>
         );
 
       case 'toc':
         return (
-          <div className="flex flex-col justify-between h-full p-8 bg-surface-1 rounded-r-2xl border-l border-white/10 text-left">
+          <div className="flex flex-col justify-between h-full p-5 sm:p-8 bg-surface-1 rounded-r-2xl border-l border-white/10 text-left">
             <div>
-              <h2 className="text-xl font-bold font-serif text-white border-b border-white/5 pb-3">
+              <h2 className="text-lg sm:text-xl font-bold font-serif text-white border-b border-white/5 pb-2 sm:pb-3">
                 {page.title}
               </h2>
-              <div className="mt-6 space-y-4">
+              <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
                 {page.chapters.map((ch, idx) => (
                   <div key={idx} className="flex justify-between items-baseline gap-2 group">
-                    <span className="text-xs text-brand-accent font-bold">0{ch.order || idx + 1}.</span>
-                    <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors truncate flex-1">
+                    <span className="text-[10px] sm:text-xs text-brand-accent font-bold">0{ch.order || idx + 1}.</span>
+                    <span className="text-xs sm:text-sm font-medium text-slate-300 group-hover:text-white transition-colors truncate flex-1">
                       {ch.title}
                     </span>
-                    <div className="border-b border-dashed border-white/10 flex-grow mx-1 min-w-[20px]" />
-                    <span className="text-xs font-mono text-slate-500">Page {idx * 2 + 2}</span>
+                    <div className="border-b border-dashed border-white/10 flex-grow mx-1 min-w-[10px]" />
+                    <span className="text-[10px] font-mono text-slate-500">Page {idx * 2 + 2}</span>
                   </div>
                 ))}
               </div>
             </div>
-            <p className="text-[10px] text-slate-500 font-mono">Sommaire · Neno AI</p>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 font-mono">Sommaire · Neno AI</p>
           </div>
         );
 
       case 'chapter_intro':
         return (
-          <div className="flex flex-col justify-between h-full p-8 bg-surface-2 rounded-l-2xl border-r border-white/5 text-left relative overflow-hidden">
+          <div className="flex flex-col justify-between h-full p-5 sm:p-8 bg-surface-2 rounded-l-2xl border-r border-white/5 text-left relative overflow-hidden">
             {page.imageUrl && (
               <div className="absolute inset-0 opacity-10 blur-sm scale-110 pointer-events-none">
                 <img src={getFullUrl(page.imageUrl)} alt="background" className="w-full h-full object-cover" />
               </div>
             )}
-            <div className="space-y-1 z-10">
-              <span className="text-[10px] font-mono font-bold text-brand-accent">CHAPITRE 0{page.chapterOrder}</span>
-              <h2 className="text-2xl font-bold font-serif text-white leading-tight">
+            <div className="space-y-0.5 z-10">
+              <span className="text-[9px] sm:text-[10px] font-mono font-bold text-brand-accent">CHAPITRE 0{page.chapterOrder}</span>
+              <h2 className="text-lg sm:text-2xl font-bold font-serif text-white leading-tight">
                 {page.title}
               </h2>
             </div>
 
-            <div className="my-6 aspect-[4/3] rounded-lg overflow-hidden border border-white/10 shadow-lg bg-slate-950 flex items-center justify-center z-10">
+            <div className="my-3 sm:my-6 aspect-[4/3] rounded-lg overflow-hidden border border-white/10 shadow-lg bg-slate-950 flex items-center justify-center z-10 max-h-[160px] sm:max-h-none">
               {page.imageUrl ? (
                 <img src={getFullUrl(page.imageUrl)} alt={page.title} className="w-full h-full object-cover" />
               ) : (
-                <BookOpen className="w-10 h-10 text-slate-800" />
+                <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-slate-800" />
               )}
             </div>
 
-            <div className="text-xs text-slate-400 bg-white/5 p-4 rounded-xl border border-white/5 z-10 italic leading-relaxed">
+            <div className="text-[10px] sm:text-xs text-slate-400 bg-white/5 p-3 sm:p-4 rounded-xl border border-white/5 z-10 italic leading-relaxed line-clamp-3 sm:line-clamp-none">
               {page.summary || 'Aucun résumé disponible pour ce chapitre.'}
             </div>
           </div>
@@ -165,12 +165,12 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
 
       case 'chapter_content':
         return (
-          <div className="flex flex-col justify-between h-full p-8 bg-surface-1 rounded-r-2xl border-l border-white/10 text-left">
-            <div className="overflow-y-auto max-h-[500px] pr-2 space-y-4 text-xs text-slate-300 leading-relaxed font-sans scrollbar-thin">
+          <div className="flex flex-col justify-between h-full p-5 sm:p-8 bg-surface-1 rounded-r-2xl border-l border-white/10 text-left">
+            <div className="overflow-y-auto max-h-[38vh] sm:max-h-[50vh] pr-2 space-y-3 text-[10px] sm:text-xs text-slate-300 leading-relaxed font-sans scrollbar-thin">
               <ReactMarkdown>{page.content || '*Contenu en cours de génération...*'}</ReactMarkdown>
             </div>
-            <div className="flex justify-between items-center border-t border-white/5 pt-4 mt-4 text-[10px] text-slate-500 font-mono">
-              <span>{page.title}</span>
+            <div className="flex justify-between items-center border-t border-white/5 pt-2 sm:pt-4 mt-2 sm:mt-4 text-[9px] sm:text-[10px] text-slate-500 font-mono">
+              <span className="truncate max-w-[120px]">{page.title}</span>
               <span>Page {page.chapterOrder * 2 + 1}</span>
             </div>
           </div>
@@ -220,8 +220,8 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
         </div>
 
         {/* 3D Book Layout */}
-        <div className="flex-1 flex items-center justify-center py-8">
-          <div className="relative w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 aspect-[4/3] md:aspect-[8/5] rounded-2xl shadow-2xl bg-surface-0 overflow-hidden border border-white/10 select-none">
+        <div className="flex-1 flex items-center justify-center py-4 sm:py-8">
+          <div className="relative w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 h-[60vh] md:h-auto md:aspect-[8/5] rounded-2xl shadow-2xl bg-surface-0 overflow-hidden border border-white/10 select-none">
             
             {/* Split Page Render */}
             <AnimatePresence mode="wait">

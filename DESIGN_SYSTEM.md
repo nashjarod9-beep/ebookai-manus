@@ -55,3 +55,21 @@ Pour assurer la cohérence visuelle des animations, trois configurations réutil
 1.  **`fadeInUp`** : Révèle les éléments en douceur du bas vers le haut (idéal pour les chargements de pages ou de sections).
 2.  **`staggerChildren`** : Orchestre l'apparition successive et rythmée des éléments enfants les uns après les autres.
 3.  **`scaleOnHover`** : Standardise la mise à l'échelle des éléments interactifs (cartes) au survol et au clic.
+
+---
+
+## 5. Breakpoints & Spécifications Responsive
+
+Afin de garantir une interface parfaitement fluide de type **mobile-first**, les règles d'espacement et d'affichage suivantes doivent être appliquées :
+
+| Breakpoint | Taille d'Écran | Configuration de Grille & Layout | Paddings & Marges Recommandés |
+| :--- | :--- | :--- | :--- |
+| **Mobile** (`sm`) | `< 640px` | Colonne simple (`flex-col`), boutons pleine largeur | `p-4`, `px-4 py-6` |
+| **Tablette** (`md`) | `640px` à `1024px` | Grille à 2 colonnes (`md:grid-cols-2`) | `p-5`, `px-5 py-8` |
+| **Desktop** (`lg` / `xl`) | `> 1024px` | Grille multi-colonnes (`lg:grid-cols-4` / `lg:grid-cols-5`) | `p-6`, `px-6 py-10` |
+
+### Règles transverses :
+*   **Bottom Tab Bar** : Sur les résolutions mobiles (`< 768px`), une barre d'onglets inférieure (`BottomTabBar`) remplace le menu de navigation pour un accès facilité aux pouces de l'utilisateur.
+*   **Bouton de Création Flottant (FAB)** : Un bouton d'action principal flottant "➕ Créer" reste collé en bas à droite sur mobile pour encourager la création.
+*   **Zéro Table** : Toute utilisation de tableau (`<table>`) est bannie sur mobile. Elle est systématiquement remplacée par des cartes (`Card`) empilées dotées de micro-détails.
+
