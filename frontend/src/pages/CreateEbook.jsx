@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateEbook, useEbook } from '../hooks/useEbook';
 import { useAI } from '../hooks/useAI';
 import api from '../lib/axios';
-import { Loader2, ArrowRight, Check, Sparkles, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Check, Sparkles, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 
 export default function CreateEbook() {
   const [step, setStep] = useState(1);
@@ -234,12 +234,31 @@ export default function CreateEbook() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Créer un nouvel ebook avec l'IA</h1>
+        <div className="flex items-center gap-4 mb-4">
+          {step > 1 && step < 5 && (
+            <button 
+              onClick={() => setStep(step - 1)}
+              className="p-2 border rounded-lg hover:bg-muted transition-colors flex items-center justify-center shrink-0"
+              title="Étape précédente"
+            >
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+          )}
+          <h1 className="text-3xl font-bold">Créer un nouvel ebook avec l'IA</h1>
+        </div>
         {/* Progress Bar (5 Steps) */}
         <div className="flex items-center justify-between relative mt-6 mb-10">
           <div className="absolute left-0 top-1/2 w-full h-1 bg-muted -z-10 -translate-y-1/2"></div>
           {[1, 2, 3, 4, 5].map((s) => (
-            <div key={s} className="flex flex-col items-center">
+            <div 
+              key={s} 
+              className={`flex flex-col items-center ${s < step && step < 5 ? 'cursor-pointer hover:opacity-80' : ''}`}
+              onClick={() => {
+                if (s < step && step < 5) {
+                  setStep(s);
+                }
+              }}
+            >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                 {s}
               </div>

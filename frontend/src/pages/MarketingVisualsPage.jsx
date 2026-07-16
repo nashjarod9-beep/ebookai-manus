@@ -64,52 +64,23 @@ export default function MarketingVisualsPage() {
     return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
   };
 
-  // Render on canvas to download with superimposed text
-  const downloadWithText = (relativeUrl, variantName) => {
-    const imageUrl = getFullUrl(relativeUrl);
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // Bypasses CORS issues
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1080;
-      const ctx = canvas.getContext('2d');
+  // Download raw generated image directly
+  const downloadImage = async (relativeUrl, variantName) => {
+    try {
+      const imageUrl = getFullUrl(relativeUrl);
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
       
-      // Draw primary image
-      ctx.drawImage(img, 0, 0, 1080, 1080);
-      
-      // Dark slate transparent overlay banner at bottom (240px high)
-      ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
-      ctx.fillRect(0, 840, 1080, 240);
-      
-      // Yellow/Gold top divider line
-      ctx.fillStyle = "#F59E0B";
-      ctx.fillRect(0, 836, 1080, 4);
-
-      // Book Title text overlay
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "bold 44px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(book?.title?.toUpperCase() || "EBOOK", 540, 905);
-      
-      // Subtitle info
-      ctx.fillStyle = "#94A3B8";
-      ctx.font = "28px sans-serif";
-      ctx.fillText("GUIDE PRATIQUE & ILLUSTRÉ EN HAUTE DÉFINITION", 540, 965);
-      
-      // Call to action text
-      ctx.fillStyle = "#F59E0B";
-      ctx.font = "bold 26px sans-serif";
-      ctx.fillText("TÉLÉCHARGEZ VOTRE EXEMPLAIRE MAINTENANT", 540, 1020);
-
-      // Download trigger
-      const dataUrl = canvas.toDataURL('image/png');
       const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `mockup_${variantName}_${book?.title?.replace(/\s+/g, '_')}.png`;
+      a.href = blobUrl;
+      a.download = `mockup_${variantName.replace(/\s+/g, '_')}_${book?.title?.replace(/\s+/g, '_') || 'ebook'}.png`;
       a.click();
-    };
-    img.src = imageUrl;
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading image:", error);
+      window.open(getFullUrl(relativeUrl), '_blank');
+    }
   };
 
   if (bookLoading || loading) {
@@ -175,18 +146,6 @@ export default function MarketingVisualsPage() {
                       alt={v.title} 
                       className="w-full h-full object-cover"
                     />
-                    {/* Permanent Advertising Flyer Text Overlay */}
-                    <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 border-t-2 border-amber-500 p-2.5 text-center text-white flex flex-col justify-center items-center h-[26%] min-h-[60px] select-none">
-                      <div className="text-[9px] font-bold text-amber-400 tracking-wider uppercase truncate max-w-full">
-                        {book?.title || "EBOOK"}
-                      </div>
-                      <div className="text-[7px] text-slate-300 font-medium tracking-wide uppercase line-clamp-1 mt-0.5">
-                        GUIDE PRATIQUE & ILLUSTRÉ EN HAUTE DÉFINITION
-                      </div>
-                      <div className="text-[7px] font-extrabold text-amber-500 tracking-widest mt-1 uppercase">
-                        TÉLÉCHARGEZ MAINTENANT
-                      </div>
-                    </div>
                   </>
                 ) : (
                   <div className="text-center p-6 space-y-2 text-muted-foreground">
@@ -223,7 +182,7 @@ export default function MarketingVisualsPage() {
                     <span>Régénérer</span>
                   </button>
                   <button 
-                    onClick={() => downloadWithText(v.url, v.name)}
+                    onClick={() => downloadImage(v.url, v.name)}
                     className="flex-1 py-2 px-3 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5 shadow"
                   >
                     <Download className="w-3.5 h-3.5" />

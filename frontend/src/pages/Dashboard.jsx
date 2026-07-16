@@ -70,7 +70,11 @@ export default function Dashboard() {
     }
   };
 
-  const getFullUrl = (url) => url ? `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}` : null;
+  const getFullUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}${url}`;
+  };
 
   return (
     <div className="container mx-auto px-6 py-10 max-w-7xl space-y-10">

@@ -748,18 +748,6 @@ ${sheetData.cta}
                   ].map((m, idx) => m.url && (
                     <div key={idx} className="relative rounded-xl overflow-hidden border shadow-sm bg-muted flex flex-col items-center aspect-square">
                       <img src={getFullUrl(m.url)} alt={m.label} className="w-full h-full object-cover" />
-                      {/* Permanent Advertising Flyer Text Overlay */}
-                      <div className="absolute bottom-0 inset-x-0 bg-slate-950/90 border-t-2 border-amber-500 p-2.5 text-center text-white flex flex-col justify-center items-center h-[26%] min-h-[50px] select-none">
-                        <div className="text-[8px] font-bold text-amber-400 tracking-wider uppercase truncate max-w-full">
-                          {book?.title || "EBOOK"}
-                        </div>
-                        <div className="text-[6px] text-slate-300 font-medium tracking-wide uppercase line-clamp-1 mt-0.5">
-                          GUIDE PRATIQUE & ILLUSTRÉ EN HAUTE DÉFINITION
-                        </div>
-                        <div className="text-[6px] font-extrabold text-amber-500 tracking-widest mt-1 uppercase">
-                          TÉLÉCHARGEZ MAINTENANT
-                        </div>
-                      </div>
                     </div>
                   ))}
                 </div>
