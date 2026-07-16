@@ -3,14 +3,19 @@ import api from '../lib/axios';
 
 export function useAuth() {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    if (!saved) return null;
-    const parsed = JSON.parse(saved);
-    if (parsed.email === 'nashjarod9@gmail.com') {
-      parsed.plan = 'agency';
-      parsed.quotaRemaining = 9999;
+    try {
+      const saved = localStorage.getItem('user');
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.email === 'nashjarod9@gmail.com') {
+        parsed.plan = 'agency';
+        parsed.quotaRemaining = 9999;
+      }
+      return parsed;
+    } catch (e) {
+      console.error("Error parsing user from localStorage:", e);
+      return null;
     }
-    return parsed;
   });
 
   useEffect(() => {
@@ -22,7 +27,12 @@ export function useAuth() {
           data.plan = 'agency';
           data.quotaRemaining = 9999;
         }
-        const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        let savedUser = {};
+        try {
+          savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        } catch (e) {
+          console.error("Error parsing user from localStorage in refresh:", e);
+        }
         const updated = { ...savedUser, ...data };
         localStorage.setItem('user', JSON.stringify(updated));
         setUser(updated);
