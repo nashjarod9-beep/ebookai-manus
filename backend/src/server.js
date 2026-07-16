@@ -14,6 +14,7 @@ const chapterRoutes = require('./routes/chapter.routes');
 const aiRoutes = require('./routes/ai.routes');
 const exportRoutes = require('./routes/export.routes');
 const marketingRoutes = require('./routes/marketing.routes');
+const playgroundRoutes = require('./routes/playground.routes');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/chapters', chapterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/marketing', marketingRoutes);
+app.use('/api/playground', playgroundRoutes);
 
 // Error Handler
 app.use(errorHandler);

@@ -69,6 +69,38 @@ export default function CreateEbook() {
     }
   }, [draftBook]);
 
+  // Chargement automatique d'un ebook généré dans le Playground local
+  useEffect(() => {
+    const storedPlayground = localStorage.getItem('playground_ebook');
+    if (storedPlayground && !draftId && !bookId) {
+      try {
+        const parsed = JSON.parse(storedPlayground);
+        setFormData(prev => ({
+          ...prev,
+          theme: parsed.theme || ''
+        }));
+        setSelectedTitle(parsed.title || '');
+        setOutline({
+          title: parsed.title,
+          description: `Ebook créé à partir de la démo sur le thème : ${parsed.theme}`,
+          coverImagePrompt: parsed.coverImagePrompt || 'Illustration de couverture premium',
+          chapters: parsed.chapters.map((ch, idx) => ({
+            order: ch.order,
+            title: ch.title,
+            summary: ch.summary,
+            subchapters: ["Introduction", "Développement"],
+            imagePrompt: `Illustration pour le chapitre ${idx + 1}`
+          }))
+        });
+        setStep(3); // Redirige directement à l'étape 3 (Structure)
+        localStorage.removeItem('playground_ebook'); // Nettoyer pour éviter les rechargements accidentels
+      } catch (e) {
+        console.error("Error parsing stored playground ebook:", e);
+      }
+    }
+  }, [draftId, bookId]);
+
+
   // Step 1 -> Step 2
   const handleGoToStep2 = async () => {
     setIsGeneratingTitles(true);
@@ -244,7 +276,7 @@ export default function CreateEbook() {
               <ArrowLeft className="w-5 h-5 text-muted-foreground" />
             </button>
           )}
-          <h1 className="text-3xl font-bold">Créer un nouvel ebook avec l'IA</h1>
+          <h1 className="text-3xl font-bold font-serif">AI Creator Journey</h1>
         </div>
         {/* Progress Bar (5 Steps) */}
         <div className="flex items-center justify-between relative mt-6 mb-10">
@@ -263,11 +295,11 @@ export default function CreateEbook() {
                 {s}
               </div>
               <span className="text-xs text-muted-foreground mt-1 absolute -translate-y-[-28px] font-medium hidden sm:inline">
-                {s === 1 && "Questionnaire"}
-                {s === 2 && "Titre"}
-                {s === 3 && "Structure"}
-                {s === 4 && "Consignes"}
-                {s === 5 && "Génération"}
+                {s === 1 && "💡 Trouver votre idée"}
+                {s === 2 && "✍️ Construire votre expertise"}
+                {s === 3 && "🎨 Donner vie au contenu"}
+                {s === 4 && "🚀 Préparer la vente"}
+                {s === 5 && "💰 Publier"}
               </span>
             </div>
           ))}

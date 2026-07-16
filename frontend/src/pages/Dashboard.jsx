@@ -92,7 +92,7 @@ export default function Dashboard() {
             className="flex items-center gap-2 bg-muted text-muted-foreground px-5 py-2.5 rounded-xl cursor-not-allowed opacity-60 text-sm font-semibold"
           >
             <Plus className="w-4 h-4" />
-            <span>Nouvel Ebook (Quota atteint)</span>
+            <span>AI Creator Journey (Quota atteint)</span>
           </button>
         ) : (
           <Link 
@@ -100,7 +100,7 @@ export default function Dashboard() {
             className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl hover:bg-primary/90 text-sm font-semibold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
-            <span>Nouvel Ebook</span>
+            <span>AI Creator Journey</span>
           </Link>
         )}
       </div>
@@ -226,7 +226,7 @@ export default function Dashboard() {
               className="flex flex-col items-center justify-center p-4 border rounded-xl hover:bg-muted text-center space-y-2 group transition-colors"
             >
               <Plus className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-semibold">Créer Ebook</span>
+              <span className="text-xs font-semibold">AI Creator Journey</span>
             </Link>
 
             <button 
