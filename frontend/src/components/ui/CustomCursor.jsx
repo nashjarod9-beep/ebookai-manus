@@ -35,6 +35,8 @@ export default function CustomCursor() {
     // Track hover states for interactive elements
     const handleMouseOver = (e) => {
       const target = e.target;
+      if (!target || typeof target.closest !== 'function') return;
+
       const isInteractive = 
         target.tagName === 'BUTTON' || 
         target.tagName === 'A' || 
