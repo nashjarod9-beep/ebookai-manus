@@ -11,6 +11,7 @@ import PricingPage from './pages/PricingPage';
 import ProductSheetPage from './pages/ProductSheetPage';
 import MarketingVisualsPage from './pages/MarketingVisualsPage';
 import MarketingContentPage from './pages/MarketingContentPage';
+import DesignPreview from './pages/DesignPreview';
 import { useAuth } from './hooks/useAuth';
 
 function PrivateRoute({ children }) {
@@ -37,6 +38,7 @@ function App() {
             <Route path="/product-sheet/:bookId" element={<PrivateRoute><ProductSheetPage /></PrivateRoute>} />
             <Route path="/marketing/visuals/:bookId" element={<PrivateRoute><MarketingVisualsPage /></PrivateRoute>} />
             <Route path="/marketing/content/:bookId" element={<PrivateRoute><MarketingContentPage /></PrivateRoute>} />
+            <Route path="/design-preview" element={<DesignPreview />} />
           </Routes>
         </main>
       </div>

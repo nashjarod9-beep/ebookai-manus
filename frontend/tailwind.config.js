@@ -33,6 +33,21 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        brand: {
+          primary: '#1E3A8A',
+          accent: '#7C3AED',
+          success: '#10B981',
+          error: '#F43F5E',
+        },
+        surface: {
+          0: '#0B0F19',
+          1: '#151D30',
+          2: '#1F2942',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
       },
     },
   },
