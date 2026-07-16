@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../lib/axios';
-import { Check, Loader2, Sparkles } from 'lucide-react';
+import { Check, Loader2, Sparkles, ArrowLeft } from 'lucide-react';
 
 export default function PricingPage() {
   const { user, login } = useAuth();
@@ -34,7 +34,7 @@ export default function PricingPage() {
         'Génération des illustrations',
         'Export PDF HD (sans filigrane)',
         'Génération de la fiche produit',
-        'Mockup publicitaire 1080x1080 (FLUX)',
+        'Mockup publicitaire 3D HD (1080x1080)',
         '10 scripts TikTok viraux',
         '5 messages WhatsApp promotionnels'
       ]
@@ -109,7 +109,16 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-6xl">
+    <div className="container mx-auto px-4 py-12 max-w-6xl relative">
+      <div className="flex justify-start mb-6">
+        <button 
+          onClick={() => navigate('/dashboard')} 
+          className="p-2 border border-white/10 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Retour au cockpit</span>
+        </button>
+      </div>
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">Choisissez l'offre qui vous convient</h1>
         <p className="text-muted-foreground max-w-xl mx-auto">

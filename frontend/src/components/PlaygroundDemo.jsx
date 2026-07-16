@@ -138,7 +138,7 @@ export default function PlaygroundDemo() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Couverture */}
                 <motion.div variants={fadeInUp} className="flex flex-col items-center">
-                  <p className="text-xs text-muted-foreground mb-2 font-mono">Couverture IA (FLUX/Ideogram)</p>
+                  <p className="text-xs text-muted-foreground mb-2 font-mono">Illustration de couverture premium</p>
                   <div className="rounded-xl overflow-hidden border border-white/10 shadow-xl aspect-[3/4] bg-surface-0 w-full max-w-[200px] md:max-w-none">
                     <img 
                       src={result.coverUrl} 

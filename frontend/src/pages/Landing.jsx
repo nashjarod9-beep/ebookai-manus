@@ -57,14 +57,14 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-4xl md:text-5xl lg:text-6xl font-bold font-serif leading-tight text-white"
           >
-            Transformez une simple idée en ebook professionnel prêt à vendre grâce à l'IA.
+            Transformez une <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent font-extrabold">simple idée</span> en <span className="text-brand-accent font-extrabold">ebook professionnel</span> prêt à vendre <span className="bg-gradient-to-r from-brand-accent to-brand-success bg-clip-text text-transparent font-extrabold">grâce à l'IA</span>.
           </motion.h1>
           
           <motion.p 
             variants={fadeInUp}
             className="text-base md:text-lg text-slate-400 leading-relaxed max-w-xl"
           >
-            Contenu, couverture, illustrations, page de vente, scripts TikTok et mockups générés automatiquement. La première plateforme africaine pour lancer votre infoproduit.
+            Contenu, <span className="text-white font-semibold">couverture</span>, <span className="text-white font-semibold">illustrations</span>, <span className="text-white font-semibold">page de vente</span>, <span className="text-white font-semibold">scripts TikTok</span> et mockups générés automatiquement. La première plateforme africaine pour lancer votre infoproduit.
           </motion.p>
           
           <motion.div 

@@ -14,6 +14,7 @@ import MarketingContentPage from './pages/MarketingContentPage';
 import DesignPreview from './pages/DesignPreview';
 import BottomTabBar from './components/BottomTabBar';
 import FloatingCreateButton from './components/FloatingCreateButton';
+import CustomCursor from './components/ui/CustomCursor';
 import { useAuth } from './hooks/useAuth';
 
 function PrivateRoute({ children }) {
@@ -43,6 +44,7 @@ function App() {
             <Route path="/design-preview" element={<DesignPreview />} />
           </Routes>
         </main>
+        <CustomCursor />
         <FloatingCreateButton />
         <BottomTabBar />
       </div>

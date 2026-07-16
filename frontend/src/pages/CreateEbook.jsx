@@ -425,7 +425,7 @@ export default function CreateEbook() {
       sseSource = connectSSE(currentBookId);
 
       // 2. Cover
-      setProgressMessage("Génération de la couverture avec l'IA FLUX...");
+      setProgressMessage("Génération de la couverture HD avec l'IA...");
       const coverRes = await generateCover(currentBookId, outline.coverImagePrompt);
       console.log("Cover complete:", coverRes);
 
@@ -509,11 +509,17 @@ export default function CreateEbook() {
         <div className="lg:col-span-2 space-y-6">
           <div className="mb-8 text-left">
             <div className="flex items-center gap-4 mb-4">
-              {step > 1 && step < 5 && (
+              {step < 5 && (
                 <button 
-                  onClick={() => setStep(step - 1)}
+                  onClick={() => {
+                    if (step === 1) {
+                      navigate('/dashboard');
+                    } else {
+                      setStep(step - 1);
+                    }
+                  }}
                   className="p-2 border border-white/10 rounded-xl hover:bg-white/5 transition-colors flex items-center justify-center shrink-0"
-                  title="Étape précédente"
+                  title={step === 1 ? "Retour au tableau de bord" : "Étape précédente"}
                 >
                   <ArrowLeft className="w-5 h-5 text-slate-400" />
                 </button>
@@ -915,7 +921,7 @@ export default function CreateEbook() {
                               {sseProgress.cover_done ? <Check className="w-2.5 h-2.5" /> : <Loader2 className="w-2.5 h-2.5 animate-spin" />}
                             </div>
                             <span className={`text-xs ${sseProgress.cover_done ? 'text-white font-semibold' : 'text-slate-400'}`}>
-                              Couverture HD FLUX
+                              Couverture HD Premium
                             </span>
                           </div>
 
@@ -1090,13 +1096,13 @@ export default function CreateEbook() {
       {/* Flipbook Viewer Modal */}
       {showFlipbook && (
         <FlipbookViewer 
-          book={{
+          book={fullBook || {
             title: customTitle.trim() || selectedTitle || outline?.title || 'Ebook Neno AI',
             coverUrl: generatedCover || (outline ? outline.coverUrl : null),
             author: formData.author,
             subject: formData.theme
           }}
-          chapters={outline?.chapters || []}
+          chapters={fullBook?.chapters || outline?.chapters || []}
           onClose={() => setShowFlipbook(false)}
         />
       )}

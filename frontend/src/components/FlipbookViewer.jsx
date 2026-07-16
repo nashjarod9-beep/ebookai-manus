@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, BookOpen, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 export default function FlipbookViewer({ book, chapters = [], onClose }) {
@@ -10,9 +10,6 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
   // Page 0: Cover page
   // Page 1: Introduction / Table of Contents
   // Page 2..N: Chapter text / Chapter illustration
-  // Let's create pages. Each chapter will have:
-  // - Left page: Illustration / title
-  // - Right page: Content markdown text
   const pages = [];
 
   // Page 0: Cover
@@ -76,6 +73,16 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
     }
   };
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight') nextPage();
+      if (e.key === 'ArrowLeft') prevPage();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage, pages.length]);
+
   const renderPageContent = (page) => {
     if (!page) return <div className="p-6 bg-surface-1 h-full rounded-r-2xl border-l border-white/10" />;
 
@@ -119,7 +126,15 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
               </h2>
               <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
                 {page.chapters.map((ch, idx) => (
-                  <div key={idx} className="flex justify-between items-baseline gap-2 group">
+                  <div 
+                    key={idx} 
+                    onClick={(e) => {
+                      e.stopPropagation(); // Avoid triggering right page turn
+                      // Chapter idx begins at page 2 (Cover = 0, TOC = 1, Chap 1 Cover = 2, Chap 1 content = 3)
+                      setCurrentPage(idx * 2 + 2);
+                    }}
+                    className="flex justify-between items-baseline gap-2 group cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-all"
+                  >
                     <span className="text-[10px] sm:text-xs text-brand-accent font-bold">0{ch.order || idx + 1}.</span>
                     <span className="text-xs sm:text-sm font-medium text-slate-300 group-hover:text-white transition-colors truncate flex-1">
                       {ch.title}
@@ -203,7 +218,7 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
   return (
     <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
       {/* Container */}
-      <div className="relative w-full max-w-5xl flex flex-col h-[90vh] md:h-[80vh] justify-between">
+      <div className="relative w-full max-w-5xl flex flex-col h-[92vh] justify-between">
         
         {/* Header toolbar */}
         <div className="flex justify-between items-center text-white border-b border-white/10 pb-4">
@@ -220,9 +235,31 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
         </div>
 
         {/* 3D Book Layout */}
-        <div className="flex-1 flex items-center justify-center py-4 sm:py-8">
-          <div className="relative w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 h-[60vh] md:h-auto md:aspect-[8/5] rounded-2xl shadow-2xl bg-surface-0 overflow-hidden border border-white/10 select-none">
+        <div className="flex-1 flex items-center justify-center py-4">
+          <div className="relative w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 h-[62vh] md:h-auto md:aspect-[8/5] rounded-2xl shadow-2xl bg-surface-0 border border-white/10 select-none">
             
+            {/* Click Left Page overlay */}
+            {currentPage > 0 && (
+              <button 
+                onClick={prevPage}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-slate-900/80 hover:bg-brand-primary text-white border border-white/10 rounded-full z-20 transition-all shadow-xl group hidden md:flex items-center justify-center cursor-pointer"
+                title="Page précédente"
+              >
+                <ChevronLeft className="w-5 h-5 group-hover:scale-110" />
+              </button>
+            )}
+
+            {/* Click Right Page overlay */}
+            {currentPage < pages.length - 2 && (
+              <button 
+                onClick={nextPage}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-slate-900/80 hover:bg-brand-primary text-white border border-white/10 rounded-full z-20 transition-all shadow-xl group hidden md:flex items-center justify-center cursor-pointer"
+                title="Page suivante"
+              >
+                <ChevronRight className="w-5 h-5 group-hover:scale-110" />
+              </button>
+            )}
+
             {/* Split Page Render */}
             <AnimatePresence mode="wait">
               <motion.div 
@@ -234,13 +271,19 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
                 className="w-full h-full flex flex-col md:grid md:grid-cols-2 col-span-2 relative"
                 style={{ perspective: 1000 }}
               >
-                {/* Left Page (Visible on desktop or mobile depending on index) */}
-                <div className="w-full h-full hidden md:block">
+                {/* Left Page (Click turns page back) */}
+                <div 
+                  onClick={prevPage}
+                  className={`w-full h-full hidden md:block ${currentPage > 0 ? 'cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all' : ''}`}
+                >
                   {renderPageContent(leftPage)}
                 </div>
 
-                {/* Right Page */}
-                <div className="w-full h-full">
+                {/* Right Page (Click turns page forward) */}
+                <div 
+                  onClick={nextPage}
+                  className={`w-full h-full ${currentPage < pages.length - 2 ? 'cursor-pointer hover:brightness-105 active:scale-[0.99] transition-all' : ''}`}
+                >
                   {renderPageContent(rightPage)}
                 </div>
 
@@ -257,7 +300,7 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
           <button 
             onClick={prevPage} 
             disabled={currentPage === 0}
-            className="flex items-center gap-2 text-xs font-bold font-mono px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="flex items-center gap-2 text-xs font-bold font-mono px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" /> Précédent
           </button>
@@ -267,7 +310,7 @@ export default function FlipbookViewer({ book, chapters = [], onClose }) {
           <button 
             onClick={nextPage} 
             disabled={currentPage >= pages.length - 2}
-            className="flex items-center gap-2 text-xs font-bold font-mono px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="flex items-center gap-2 text-xs font-bold font-mono px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
           >
             Suivant <ArrowRight className="w-4 h-4" />
           </button>
