@@ -44,6 +44,7 @@ function App() {
             <Route path="/design-preview" element={<DesignPreview />} />
           </Routes>
         </main>
+        <CustomCursor />
         <FloatingCreateButton />
         <BottomTabBar />
       </div>

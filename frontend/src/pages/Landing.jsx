@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, Download, Layers, ShoppingBag, ArrowRight, 
   BookOpen, ChevronDown, ChevronUp, AlertCircle, HelpCircle, 
-  Smartphone, CreditCard, Award, MessageSquare, Flame, CheckCircle
+  Smartphone, CreditCard, Award, MessageSquare, Flame, CheckCircle, Mail
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
