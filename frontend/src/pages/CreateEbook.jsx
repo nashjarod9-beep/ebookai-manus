@@ -90,6 +90,15 @@ const questionsList = [
 ];
 
 export default function CreateEbook() {
+  const getFullUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+      return url;
+    }
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${import.meta.env.VITE_API_URL || ''}${cleanUrl}`;
+  };
+
   const [step, setStep] = useState(1);
   const [activeQ, setActiveQ] = useState(0); // Question conversationnelle active
   const [showRestoreModal, setShowRestoreModal] = useState(false);
