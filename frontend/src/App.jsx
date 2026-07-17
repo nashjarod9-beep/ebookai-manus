@@ -13,6 +13,11 @@ import ProductSheetPage from './pages/ProductSheetPage';
 import MarketingVisualsPage from './pages/MarketingVisualsPage';
 import MarketingContentPage from './pages/MarketingContentPage';
 import DesignPreview from './pages/DesignPreview';
+import ContactPage from './pages/ContactPage';
+import PrivacyPage from './pages/legal/PrivacyPage';
+import TermsPage from './pages/legal/TermsPage';
+import LegalPage from './pages/legal/LegalPage';
+import AISecurityPage from './pages/legal/AISecurityPage';
 import BottomTabBar from './components/BottomTabBar';
 import FloatingCreateButton from './components/FloatingCreateButton';
 import CustomCursor from './components/ui/CustomCursor';
@@ -33,12 +38,17 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/legal/confidentialite" element={<PrivacyPage />} />
+            <Route path="/legal/conditions" element={<TermsPage />} />
+            <Route path="/legal/mentions" element={<LegalPage />} />
+            <Route path="/legal/securite-ia" element={<AISecurityPage />} />
             <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/create" element={<PrivateRoute><CreateEbook /></PrivateRoute>} />
             <Route path="/create/:draftId" element={<PrivateRoute><CreateEbook /></PrivateRoute>} />
             <Route path="/editor/:id" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
             <Route path="/preview/:id" element={<PrivateRoute><PreviewPage /></PrivateRoute>} />
-            <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
             <Route path="/billing" element={<PrivateRoute><BillingPage /></PrivateRoute>} />
             <Route path="/product-sheet/:bookId" element={<PrivateRoute><ProductSheetPage /></PrivateRoute>} />
             <Route path="/marketing/visuals/:bookId" element={<PrivateRoute><MarketingVisualsPage /></PrivateRoute>} />

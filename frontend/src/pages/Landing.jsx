@@ -436,11 +436,11 @@ export default function Landing() {
             <div className="space-y-2 pt-2 text-slate-600 font-semibold">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-brand-accent" />
-                <span>+221 77 123 45 67 (Sénégal)</span>
+                <span>+221 77 838 96 10 (Sénégal)</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-brand-accent" />
-                <span>contact@neno.ai</span>
+                <span>nashjarod9@gmail.com</span>
               </div>
             </div>
           </div>
@@ -453,7 +453,7 @@ export default function Landing() {
                 <li><a href="#playground-section" className="hover:text-brand-accent transition-colors">Playground Démo</a></li>
                 <li><a href="/pricing" className="hover:text-brand-accent transition-colors">Tarifs & Offres</a></li>
                 <li><a href="#features-section" className="hover:text-brand-accent transition-colors">Fonctionnalités</a></li>
-                <li><a href="/register" className="hover:text-brand-accent transition-colors">Créer un compte</a></li>
+                <li><a href="/contact" className="hover:text-brand-accent transition-colors">Contact</a></li>
               </ul>
             </div>
 
@@ -479,11 +479,11 @@ export default function Landing() {
 
             <div className="space-y-3">
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[10px]">Légal</h4>
-              <ul className="space-y-2 text-slate-500 font-medium">
-                <li><span className="cursor-pointer hover:text-brand-accent transition-colors">Confidentialité</span></li>
-                <li><span className="cursor-pointer hover:text-brand-accent transition-colors">Conditions Générales</span></li>
-                <li><span className="cursor-pointer hover:text-brand-accent transition-colors">Mentions Légales</span></li>
-                <li><span className="cursor-pointer hover:text-brand-accent transition-colors">Sécurité de l'IA</span></li>
+                <ul className="space-y-2 text-slate-500 font-medium">
+                <li><a href="/legal/confidentialite" className="hover:text-brand-accent transition-colors">Confidentialité</a></li>
+                <li><a href="/legal/conditions" className="hover:text-brand-accent transition-colors">Conditions Générales</a></li>
+                <li><a href="/legal/mentions" className="hover:text-brand-accent transition-colors">Mentions Légales</a></li>
+                <li><a href="/legal/securite-ia" className="hover:text-brand-accent transition-colors">Sécurité de l'IA</a></li>
               </ul>
             </div>
           </div>
