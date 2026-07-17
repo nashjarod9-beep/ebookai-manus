@@ -8,3 +8,5 @@ uploads/pdfs/*
 uploads/exports/*
 uploads/audios/*
 !uploads/**/.gitkeep
+
+.vercel
