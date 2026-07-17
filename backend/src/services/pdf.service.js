@@ -33,16 +33,7 @@ const parseCustomMarkdown = (markdown) => {
       }
     });
 
-    return `
-      <div class="cards-grid">
-        ${cards.map(c => `
-          <div class="card-item">
-            <div class="card-item-title">${c.title}</div>
-            <div class="card-item-desc">${c.desc}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    return `<div class="cards-grid">${cards.map(c => `<div class="card-item"><div class="card-item-title">${c.title}</div><div class="card-item-desc">${c.desc}</div></div>`).join('')}</div>`;
   });
 
   // 4. Parse flowchart: > [flow] \n > Title | desc -> Title | desc -> ...
@@ -53,24 +44,7 @@ const parseCustomMarkdown = (markdown) => {
       return { title: parts[0] || '', desc: parts[1] || '' };
     });
 
-    return `
-      <div class="flow-grid">
-        ${steps.map((step, idx) => `
-          <div class="flow-step">
-            <div class="flow-step-num">${String(idx + 1).padStart(2, '0')}</div>
-            <div class="flow-step-content">
-              <div class="flow-step-title">${step.title}</div>
-              <div class="flow-step-desc">${step.desc}</div>
-            </div>
-          </div>
-          ${idx < steps.length - 1 ? `
-            <div class="flow-arrow">
-              <svg viewBox="0 0 24 24" width="16" height="16" stroke="#B5893D" stroke-width="2.5" fill="none"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
-          ` : ''}
-        `).join('')}
-      </div>
-    `;
+    return `<div class="flow-grid">${steps.map((step, idx) => `<div class="flow-step"><div class="flow-step-num">${String(idx + 1).padStart(2, '0')}</div><div class="flow-step-content"><div class="flow-step-title">${step.title}</div><div class="flow-step-desc">${step.desc}</div></div></div>${idx < steps.length - 1 ? `<div class="flow-arrow"><svg viewBox="0 0 24 24" width="16" height="16" stroke="#B5893D" stroke-width="2.5" fill="none"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>` : ''}`).join('')}</div>`;
   });
 
   return content;
