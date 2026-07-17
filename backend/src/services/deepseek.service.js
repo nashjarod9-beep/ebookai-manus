@@ -128,34 +128,58 @@ const generateChapter = async (chapterData, bookContext) => {
 
   const prompt = `
 Tu es un rédacteur professionnel d'ebooks. Rédige le chapitre suivant d'un ebook :
-
+ 
 Contexte général de l'ebook :
 - Thème principal : "${theme}"
 - Objectif : "${objective}"
 - Public cible : "${audience}"
 - Ton : "${tone}"
 - Langue : "${language}"
-
+ 
 Détails du chapitre à rédiger :
 - Numéro du chapitre : ${order}
 - Titre : "${title}"
 - Résumé de ce que doit couvrir ce chapitre : "${summary}"
 ${subchapters && subchapters.length > 0 ? `- Sous-chapitres / sections à couvrir obligatoirement : \n${subchapters.map(s => `  * ${s}`).join('\n')}` : ''}
-
+ 
 ${additionalInstructions ? `Consignes de rédaction particulières fournies par l'utilisateur (à respecter obligatoirement) :
 "${additionalInstructions}"` : ''}
-
-Instructions de rédaction :
+ 
+Instructions de rédaction et mise en page premium :
 1. Rédige un chapitre complet, extrêmement détaillé, riche et fluide, structuré selon les sous-chapitres spécifiés.
-2. Utilise le format Markdown pour structurer le texte (titres de section H2/H3 avec ## et ###, listes, textes en gras, citations). Ne mets pas de titre H1 (#) au début car il est déjà fourni par le système.
-3. Rédige uniquement le contenu textuel du chapitre. N'ajoute pas de préambule ni de commentaires introductifs (ex: "Voici votre chapitre :"). Commence directement par la rédaction.
-4. Rédige obligatoirement dans la langue demandée : "${language}".`;
-
+2. Utilise le format Markdown pour structurer le texte (titres de section H2/H3 avec ## et ###, listes, textes en gras). Ne mets pas de titre H1 (#) au début car il est déjà fourni par le système.
+3. Rédige uniquement le contenu textuel du chapitre. N'ajoute pas de préambule ni de commentaires introductifs. Commence directement par la rédaction.
+4. Rédige obligatoirement dans la langue demandée : "${language}".
+5. **Mise en valeur visuelle d'édition premium** :
+   - Mets les termes clés et mots-clés importants en **gras** pour dynamiser la lecture.
+   - Utilise des tableaux Markdown si tu présentes des données comparatives (ex: critères, prix, avantages/inconvénients).
+   - Utilise les blocs de mise en page personnalisés suivants lorsque le contexte s'y prête (au moins un par chapitre) :
+     
+     * Pour un **Point Clé** ou une conclusion forte :
+       > [point-cle]
+       > **TITRE DU POINT CLÉ EN MAJUSCULES**
+       > Texte du point clé qui ressort de manière élégante...
+       
+     * Pour une **Erreur ou Avertissement** important :
+       > [attention]
+       > **TITRE DE L'ERREUR EN MAJUSCULES**
+       > Explication du piège à éviter et comment le contourner...
+       
+     * Pour une **Grille de Cartes** (présentation de 3 statistiques ou 3 notions clés côte à côte) :
+       > [cards]
+       > * **Titre 1** | Description courte du premier élément
+       > * **Titre 2** | Description courte du deuxième élément
+       > * **Titre 3** | Description courte du troisième élément
+       
+     * Pour un **Processus linéaire** (flowchart) décrivant des étapes :
+       > [flow]
+       > Étape 1 | Description simple -> Étape 2 | Description simple -> Étape 3 | Description simple`;
+ 
   const content = await callDeepSeek([
     { role: 'system', content: 'Tu es un rédacteur professionnel d\'ebooks haut de gamme.' },
     { role: 'user', content: prompt }
   ]);
-
+ 
   return content.trim();
 };
 
