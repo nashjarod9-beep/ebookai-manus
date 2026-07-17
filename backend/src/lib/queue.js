@@ -16,8 +16,16 @@ const bookGenerationQueue = new Queue(queueName, {
   }
 });
 
+bookGenerationQueue.on('error', (err) => {
+  console.error('[BullMQ Queue Error] Connection issues:', err.message);
+});
+
 const flowProducer = new FlowProducer({
   connection: redisConnection
+});
+
+flowProducer.on('error', (err) => {
+  console.error('[BullMQ FlowProducer Error] Connection issues:', err.message);
 });
 
 const enqueueBookGeneration = async (book, outline, formData, additionalInstructions, generationJobId) => {

@@ -199,3 +199,7 @@ worker.on('failed', (job, err) => {
 worker.on('completed', (job) => {
   console.log(`[Worker Global] Job ${job.id} completed successfully.`);
 });
+
+worker.on('error', (err) => {
+  console.error('[BullMQ Worker Error] Connection issues:', err.message);
+});
