@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -19,6 +18,11 @@ model User {
   ebooksConsumed    Int       @default(0)
   quotaRemaining    Int       @default(0)
   books             Book[]
+  storageAssets     StorageAsset[]
+  aiUsageLogs       AiUsageLog[]
+  subscription      Subscription?
+  creditTransactions CreditTransaction[]
+  auditLogs         AuditLog[]
   createdAt         DateTime  @default(now())
 }
 
@@ -43,6 +47,9 @@ model Book {
   additionalInstructions String? // User specific design guidelines
   chapters     Chapter[]
   marketingAsset MarketingAsset?
+  generationJobs GenerationJob[]
+  aiUsageLogs    AiUsageLog[]
+  creditTransactions CreditTransaction[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 }
@@ -74,4 +81,84 @@ model MarketingAsset {
   mockupUrl2    String?  // Variante 2: Livre tenu dans une main
   mockupUrl3    String?  // Variante 3: Livre avec ordinateur portable
   createdAt     DateTime @default(now())
+}
+
+model GenerationJob {
+  id          String   @id @default(cuid())
+  bookId      String
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  status      String   // "queued" | "running" | "completed" | "failed"
+  currentStep String?
+  totalSteps  Int
+  stepIndex   Int      @default(0)
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StorageAsset {
+  id           String   @id @default(cuid())
+  date         DateTime @default(now())
+  version      String   @default("1.0.0")
+  taille       Int
+  hash         String
+  utilisateurId String
+  user         User     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  format       String
+  origine      String
+  workerId     String?
+  statut       String   @default("active")
+  path         String   @unique
+  url          String
+  createdAt    DateTime @default(now())
+}
+
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId           String?
+  book             Book?    @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  provider         String
+  model            String
+  tokensOrCredits  Int      @default(0)
+  costEstimateFcfa Float    @default(0.0)
+  durationMs       Int      @default(0)
+  success          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+}
+
+model Subscription {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              String   // "free" | "starter" | "creator" | "business" | "agency"
+  creditsAllocated  Int
+  creditsRemaining  Int
+  cycleStartDate    DateTime
+  cycleEndDate      DateTime
+  status            String   // "active" | "canceled" | "past_due"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      String   // ex. "chapter_write", "illustration", "cover", ...
+  amount      Int      // négatif = consommation, positif = crédit (achat, remboursement)
+  bookId      String?
+  book        Book?    @relation(fields: [bookId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // "login" | "password_change" | "purchase" | "export" | "delete" | "share"
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
 }

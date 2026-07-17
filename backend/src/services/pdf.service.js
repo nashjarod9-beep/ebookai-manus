@@ -1,6 +1,7 @@
 const { uploadPdfExport } = require('./storage.service');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sanitizeGeneratedHtml } = require('../utils/sanitize');
 
 const parseCustomMarkdown = (markdown) => {
   if (!markdown) return '';
@@ -656,7 +657,7 @@ const buildEbookHTML = (book, chapters, userPlan) => `
 </html>
 `;
 
-const generatePDF = async (book, chapters, userId) => {
+const generatePDF = async (book, chapters, userId, workerId = null) => {
   let browser;
   const isProd = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
@@ -685,10 +686,10 @@ const generatePDF = async (book, chapters, userId) => {
     let contentHTML = '';
     try {
       const parsedMarkdown = parseCustomMarkdown(c.content || '');
-      contentHTML = marked.parse(parsedMarkdown);
+      contentHTML = sanitizeGeneratedHtml(marked.parse(parsedMarkdown));
     } catch (e) {
       console.error(`Error parsing markdown for chapter ${c.order}:`, e);
-      contentHTML = c.content || '';
+      contentHTML = sanitizeGeneratedHtml(c.content || '');
     }
     return {
       ...c,
@@ -744,7 +745,7 @@ const generatePDF = async (book, chapters, userId) => {
   await browser.close();
 
   // Upload to Supabase Storage in exports/ folder
-  const publicUrl = await uploadPdfExport(pdfBuffer, userId, filename);
+  const publicUrl = await uploadPdfExport(pdfBuffer, userId, filename, 'application/pdf', workerId);
   
   return publicUrl;
 };

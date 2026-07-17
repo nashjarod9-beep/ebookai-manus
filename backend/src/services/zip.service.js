@@ -4,7 +4,7 @@ const path = require('path');
 const os = require('os');
 const { uploadPdfExport } = require('./storage.service');
 
-const generateZip = async (book, chapters, userId) => {
+const generateZip = async (book, chapters, userId, workerId = null) => {
   return new Promise((resolve, reject) => {
     const filename = `ebook_${book.id}_${Date.now()}.zip`;
     // Use OS temp dir which is writable on Vercel Serverless
@@ -17,7 +17,7 @@ const generateZip = async (book, chapters, userId) => {
     output.on('close', async function() {
       try {
         const fileBuffer = fs.readFileSync(filepath);
-        const publicUrl = await uploadPdfExport(fileBuffer, userId, filename, 'application/zip');
+        const publicUrl = await uploadPdfExport(fileBuffer, userId, filename, 'application/zip', workerId);
         // Clean up temp file
         fs.unlinkSync(filepath);
         resolve(publicUrl);

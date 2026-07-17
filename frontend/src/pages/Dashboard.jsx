@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEbooks, useDeleteEbook } from '../hooks/useEbook';
 import { useAuth } from '../hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
 import api from '../lib/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, AlertTriangle, BookOpen, FileText, 
   Image as ImageIcon, Sparkles, Send, Download, Trash2, Copy, Loader2,
-  MoreVertical, Search, HelpCircle, Eye
+  MoreVertical, Search, HelpCircle, Eye, CreditCard
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { fadeInUp, staggerChildren } from '../design-system/motion';
+import CreditsMeter from '../components/CreditsMeter';
 
 export default function Dashboard() {
   const { data: ebooks, isLoading, refetch } = useEbooks();
@@ -20,6 +22,7 @@ export default function Dashboard() {
   const deleteEbook = useDeleteEbook();
   
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showNoCreditsModal, setShowNoCreditsModal] = useState(false);
   const [duplicatingId, setDuplicatingId] = useState(null);
   
   // États de recherche, filtres et pagination
@@ -29,34 +32,23 @@ export default function Dashboard() {
   const [activeMenuId, setActiveMenuId] = useState(null);
   const itemsPerPage = 5;
 
-  // Constants
-  const planLimits = {
-    free: 'Brouillons uniquement',
-    starter: 3,
-    creator: 10,
-    business: 25,
-    agency: 60
-  };
+  // React Query query for subscription state
+  const { data: subscription } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: async () => {
+      const { data } = await api.get('/subscription/me');
+      return data;
+    }
+  });
 
-  const planPrices = {
-    free: 'Gratuit',
-    starter: '2 500 FCFA/mois',
-    creator: '5 000 FCFA/mois',
-    business: '10 000 FCFA/mois',
-    agency: '20 000 FCFA/mois'
-  };
-
-  const limit = planLimits[user?.plan || 'free'];
-  const hasReachedQuota = user?.plan !== 'free' && user?.quotaRemaining <= 0 && user?.email !== 'nashjarod9@gmail.com';
-
+  const creditsRemaining = subscription?.creditsRemaining ?? 0;
+  const plan = subscription?.plan || 'free';
+  const hasReachedQuota = plan !== 'free' && creditsRemaining <= 0;
+ 
   // Calculs statistiques
   const totalCreated = ebooks?.length || 0;
   const lastBook = ebooks && ebooks.length > 0 ? ebooks[0] : null;
   
-  // Pourcentage de quotas restants
-  const totalAllocated = (user?.quotaRemaining || 0) + (user?.ebooksConsumed || 0);
-  const percentRemaining = totalAllocated > 0 ? Math.round((user?.quotaRemaining / totalAllocated) * 100) : 0;
-
   // Valeur financière générée (15 000 FCFA de valeur moyenne estimée par ebook)
   const estimatedValue = totalCreated * 15000;
 
@@ -150,12 +142,12 @@ export default function Dashboard() {
         
         {hasReachedQuota ? (
           <Button 
-            onClick={() => setShowUpgradeModal(true)}
+            onClick={() => setShowNoCreditsModal(true)}
             variant="primary"
-            className="flex items-center gap-2 cursor-not-allowed opacity-60"
+            className="flex items-center gap-2 shadow-lg shadow-brand-primary/20"
           >
             <Plus className="w-5 h-5" />
-            <span>AI Creator Journey (Quota atteint)</span>
+            <span>AI Creator Journey (Épuisé)</span>
           </Button>
         ) : (
           <Button 
@@ -184,30 +176,8 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Card 2: Crédits IA restants */}
-        <Card hoverEffect={true} className="p-5 flex flex-col justify-between h-full bg-surface-1/40 border border-white/5 text-left">
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-accent">Crédits IA Restants</span>
-              <h3 className="text-2xl font-extrabold text-white mt-1">
-                {user?.plan === 'free' ? 'Brouillons' : `${user?.quotaRemaining} / ${totalAllocated}`}
-              </h3>
-            </div>
-            {/* Linear Progress Bar */}
-            {user?.plan !== 'free' && (
-              <div className="space-y-1">
-                <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-brand-accent h-full rounded-full transition-all duration-500" style={{ width: `${percentRemaining}%` }} />
-                </div>
-                <p className="text-[9px] text-slate-400 text-right">{percentRemaining}% restants</p>
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-between text-xs text-slate-400 pt-4 border-t border-white/5 mt-4">
-            <span>Limite mensuelle</span>
-            <span className="font-semibold text-white">{limit}</span>
-          </div>
-        </Card>
+        {/* Card 2: Crédits IA restants (CreditsMeter intégré) */}
+        <CreditsMeter />
 
         {/* Card 3: Valeur financière générée */}
         <Card hoverEffect={true} className="p-5 flex flex-col justify-between h-full bg-surface-1/40 border border-white/5 text-left">
@@ -618,7 +588,7 @@ export default function Dashboard() {
         )}
       </motion.div>
 
-      {/* Upgrade Quota Modal */}
+      {/* Upgrade Quota Modal (Legacy) */}
       {showUpgradeModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-surface-1 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
@@ -630,8 +600,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-sm text-slate-300 leading-relaxed text-left">
-              Pour pouvoir créer un nouvel ebook dès maintenant, veuillez passer à une offre supérieure (Creator, Business ou Agency). 
-              Vos crédits restants seront immédiatement mis à jour !
+              Pour pouvoir créer un nouvel ebook dès maintenant, veuillez passer à une offre supérieure.
             </p>
             <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
               <button 
@@ -643,13 +612,60 @@ export default function Dashboard() {
               <Button 
                 onClick={() => {
                   setShowUpgradeModal(false);
-                  navigate('/pricing');
+                  navigate('/billing');
                 }}
                 variant="primary"
                 className="text-xs"
               >
                 Changer d'offre
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Credits Modal */}
+      {showNoCreditsModal && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-1 border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 text-center">
+            <div className="w-16 h-16 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full flex items-center justify-center mx-auto animate-pulse">
+              <AlertTriangle className="w-8 h-8" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold font-serif text-white">Vous avez utilisé tous vos crédits ce mois-ci</h3>
+              <p className="text-xs text-slate-400">
+                Votre solde de crédits est actuellement épuisé. Pour continuer à générer des ebooks et du contenu d'IA premium, veuillez choisir l'une des options suivantes :
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-2">
+              <button 
+                onClick={() => {
+                  setShowNoCreditsModal(false);
+                  navigate('/billing');
+                }}
+                className="w-full py-3 bg-brand-accent text-white font-bold rounded-2xl hover:bg-brand-accent/90 transition-all text-xs font-mono"
+              >
+                Passer à l'offre supérieure ⚡
+              </button>
+              
+              <button 
+                onClick={() => {
+                  setShowNoCreditsModal(false);
+                  navigate('/billing?packs=true');
+                }}
+                className="w-full py-3 bg-white/10 text-white font-semibold rounded-2xl hover:bg-white/15 transition-all text-xs"
+              >
+                Acheter des crédits supplémentaires 💎
+              </button>
+
+              <button 
+                onClick={() => setShowNoCreditsModal(false)}
+                className="w-full py-2.5 text-slate-500 hover:text-slate-300 transition-colors text-xs"
+              >
+                Retourner au tableau de bord
+              </button>
             </div>
           </div>
         </div>

@@ -104,6 +104,17 @@ const deleteEbook = async (req, res, next) => {
     }
 
     await prisma.book.delete({ where: { id: bookId } });
+    
+    // Log audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'delete',
+        metadata: { bookId },
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
+    });
+
     res.json({ message: 'Livre supprimé' });
   } catch (error) {
     next(error);
@@ -157,13 +168,81 @@ const duplicateEbook = async (req, res, next) => {
       }
     });
 
+    // Log audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'share',
+        metadata: { sourceBookId: bookId, duplicatedBookId: duplicatedBook.id },
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
+    });
+
     res.status(201).json(duplicatedBook);
   } catch (error) {
     next(error);
   }
 };
 
-const { progressEmitter, getProgressCache } = require('../services/progress.service');
+const { progressEmitter } = require('../services/progress.service');
+const { enqueueBookGeneration } = require('../lib/queue');
+
+const startBookGeneration = async (req, res, next) => {
+  try {
+    const bookId = req.params.id;
+    const { formData, additionalInstructions } = req.body;
+
+    const book = await prisma.book.findUnique({
+      where: { id: bookId }
+    });
+
+    if (!book) {
+      return res.status(404).json({ message: 'Livre introuvable' });
+    }
+
+    if (book.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Accès refusé' });
+    }
+
+    if (!book.outline) {
+      return res.status(400).json({ message: 'Le plan de l\'ebook doit être généré avant de lancer la rédaction' });
+    }
+
+    const outline = JSON.parse(book.outline);
+    const chapters = outline.chapters || [];
+    
+    // Total steps: Cover (1) + Chapters text (N) + Chapters images (M) + PDF (1) + Marketing (1)
+    const totalSteps = 1 + chapters.length + chapters.filter(ch => ch.imagePrompt).length + 2;
+
+    // Create a new GenerationJob in DB
+    const job = await prisma.generationJob.create({
+      data: {
+        bookId,
+        status: 'queued',
+        currentStep: 'File d\'attente rejointe...',
+        totalSteps,
+        stepIndex: 0
+      }
+    });
+
+    // Enqueue BullMQ Flow
+    await enqueueBookGeneration(book, outline, formData, additionalInstructions, job.id);
+
+    // Update book status
+    await prisma.book.update({
+      where: { id: bookId },
+      data: { status: 'generating' }
+    });
+
+    res.status(202).json({
+      message: 'Génération asynchrone lancée avec succès',
+      jobId: job.id,
+      status: job.status
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 const getEbookProgressSSE = async (req, res, next) => {
   try {
@@ -185,10 +264,24 @@ const getEbookProgressSSE = async (req, res, next) => {
       res.write(`data: ${JSON.stringify(data)}\n\n`);
     };
 
-    // Send current cached progress first
-    const current = getProgressCache(bookId);
-    if (current) {
-      res.write(`data: ${JSON.stringify(current)}\n\n`);
+    // Try to get latest job progress from DB first
+    const latestJob = await prisma.generationJob.findFirst({
+      where: { bookId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (latestJob) {
+      res.write(`data: ${JSON.stringify({
+        bookId,
+        step: latestJob.currentStep,
+        message: latestJob.currentStep,
+        stepIndex: latestJob.stepIndex,
+        totalSteps: latestJob.totalSteps,
+        status: latestJob.status,
+        timestamp: Date.now()
+      })}\n\n`);
+    } else {
+      res.write(`data: ${JSON.stringify({ bookId, step: 'init', message: 'Initialisation...', stepIndex: 0, totalSteps: 10, status: 'queued' })}\n\n`);
     }
 
     progressEmitter.on(`progress:${bookId}`, listener);
@@ -209,5 +302,6 @@ module.exports = {
   updateEbook,
   deleteEbook,
   duplicateEbook,
-  getEbookProgressSSE
+  getEbookProgressSSE,
+  startBookGeneration
 };

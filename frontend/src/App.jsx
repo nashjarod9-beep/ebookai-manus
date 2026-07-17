@@ -8,6 +8,7 @@ import CreateEbook from './pages/CreateEbook';
 import EditorPage from './pages/EditorPage';
 import PreviewPage from './pages/PreviewPage';
 import PricingPage from './pages/PricingPage';
+import BillingPage from './pages/BillingPage';
 import ProductSheetPage from './pages/ProductSheetPage';
 import MarketingVisualsPage from './pages/MarketingVisualsPage';
 import MarketingContentPage from './pages/MarketingContentPage';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/editor/:id" element={<PrivateRoute><EditorPage /></PrivateRoute>} />
             <Route path="/preview/:id" element={<PrivateRoute><PreviewPage /></PrivateRoute>} />
             <Route path="/pricing" element={<PrivateRoute><PricingPage /></PrivateRoute>} />
+            <Route path="/billing" element={<PrivateRoute><BillingPage /></PrivateRoute>} />
             <Route path="/product-sheet/:bookId" element={<PrivateRoute><ProductSheetPage /></PrivateRoute>} />
             <Route path="/marketing/visuals/:bookId" element={<PrivateRoute><MarketingVisualsPage /></PrivateRoute>} />
             <Route path="/marketing/content/:bookId" element={<PrivateRoute><MarketingContentPage /></PrivateRoute>} />

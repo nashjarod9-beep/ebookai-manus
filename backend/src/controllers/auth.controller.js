@@ -57,6 +57,15 @@ const loginUser = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
+      // Log audit log
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'login',
+          ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+        }
+      });
+
       res.json({
         id: user.id,
         name: user.name,
@@ -121,6 +130,15 @@ const googleAuth = async (req, res, next) => {
       });
     }
 
+    // Log audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'login',
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
+    });
+
     res.json({
       id: user.id,
       name: user.name,
@@ -143,6 +161,10 @@ const getMe = async (req, res, next) => {
 
 const updateUserPlan = async (req, res, next) => {
   try {
+    if (req.user.email !== 'nashjarod9@gmail.com') {
+      return res.status(403).json({ message: "Le changement de plan direct est désactivé. Veuillez utiliser le module de paiement." });
+    }
+
     const { plan } = req.body;
     const validPlans = ['free', 'starter', 'creator', 'business', 'agency'];
     if (!validPlans.includes(plan)) {
@@ -189,10 +211,45 @@ const updateUserPlan = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Veuillez remplir tous les champs' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user || !(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { passwordHash }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'password_change',
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
+    });
+
+    res.json({ message: 'Mot de passe changé avec succès' });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   googleAuth,
   getMe,
-  updateUserPlan
+  updateUserPlan,
+  changePassword
 };

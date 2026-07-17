@@ -362,7 +362,7 @@ export default function CreateEbook() {
     const url = `${sseBase}/ebooks/${id}/progress?token=${token}`;
 
     const eventSource = new EventSource(url);
-    eventSource.onmessage = (event) => {
+    eventSource.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
         console.log("SSE update:", data);
@@ -374,6 +374,10 @@ export default function CreateEbook() {
           currentMessage: data.message
         }));
 
+        if (data.message) {
+          setProgressMessage(data.message);
+        }
+
         if (data.coverUrl) {
           setGeneratedCover(data.coverUrl);
           showEmotionToast("🎉 Votre couverture est magnifique.");
@@ -381,8 +385,28 @@ export default function CreateEbook() {
         if (data.chapterText) {
           setPreviewText(data.chapterText);
         }
-        if (data.step === 'chapter_done') {
-          showEmotionToast(`🔥 Le chapitre ${data.order} est particulièrement convaincant.`);
+        if (data.step === 'chapter-text') {
+          showEmotionToast(`🔥 Le chapitre de l'ebook est en cours de rédaction.`);
+        }
+
+        // Handle end of async generation
+        if (data.status === 'completed') {
+          console.log("Generation completed asynchronously!");
+          try {
+            const { data: book } = await api.get(`/books/${id}`);
+            setResultData({ pdfUrl: book.pdfPath });
+            localStorage.removeItem('neno_draft_ebook_v1'); // Clean on success
+          } catch (fetchErr) {
+            console.error("Failed to fetch final book details:", fetchErr);
+          }
+          setIsGenerating(false);
+          eventSource.close();
+        } else if (data.status === 'failed') {
+          console.error("Generation failed asynchronously:", data.error);
+          alert(`Erreur lors de la génération : ${data.error || 'Erreur inconnue'}. Veuillez réessayer.`);
+          setStep(4);
+          setIsGenerating(false);
+          eventSource.close();
         }
       } catch (err) {
         console.error("SSE parse error:", err);
@@ -390,15 +414,14 @@ export default function CreateEbook() {
     };
 
     eventSource.onerror = (e) => {
-      console.warn("SSE disconnected, retrying or closed.", e);
-      eventSource.close();
+      console.warn("SSE disconnected.", e);
     };
 
     sseSourceRef.current = eventSource;
     return eventSource;
   };
 
-  // Sequencer + SSE Trigger
+  // Sequencer + SSE Trigger (Server-Side Async)
   const handleFullGeneration = async () => {
     setIsGenerating(true);
     setStep(5);
@@ -411,7 +434,7 @@ export default function CreateEbook() {
       let currentBookId = bookId;
       const finalTitle = customTitle.trim() || selectedTitle || outline.title;
       
-      // 1. Create DB Draft
+      // 1. Create DB Draft if not already created
       if (!currentBookId) {
         setProgressMessage("Création du livre dans la base de données...");
         const book = await createEbook.mutateAsync({
@@ -430,52 +453,22 @@ export default function CreateEbook() {
         setBookId(book.id);
       }
 
-      // Connect to SSE stream
+      // 2. Trigger asynchronous server-side generation
+      setProgressMessage("Lancement de la génération asynchrone sur le serveur...");
+      await api.post(`/books/${currentBookId}/generate`, {
+        formData,
+        additionalInstructions
+      });
+
+      // 3. Connect to SSE stream to follow progress updates
       sseSource = connectSSE(currentBookId);
-
-      // 2. Cover
-      setProgressMessage("Génération de la couverture HD avec l'IA...");
-      const coverRes = await generateCover(currentBookId, outline.coverImagePrompt);
-      console.log("Cover complete:", coverRes);
-
-      // 3. Chapters
-      for (let i = 0; i < outline.chapters.length; i++) {
-        const ch = outline.chapters[i];
-        setProgressMessage(`Génération du chapitre ${i + 1}/${outline.chapters.length} : "${ch.title}"...`);
-        await generateChapter(currentBookId, ch, {
-          ...formData,
-          additionalInstructions
-        });
-      }
-
-      // 4. PDF
-      setProgressMessage("Compilation et mise en page du document PDF professionnel...");
-      const { data: pdfResult } = await api.post(`/export/pdf/${currentBookId}`);
-
-      // 5. Product Sheet
-      setProgressMessage("Création de la page de vente et de la fiche produit...");
-      await api.post('/marketing/product-sheet', { bookId: currentBookId });
-
-      // 6. TikTok
-      setProgressMessage("Génération des 10 scripts viraux TikTok...");
-      await api.post('/marketing/tiktok-scripts', { bookId: currentBookId });
-
-      // 7. Mockup
-      setProgressMessage("Génération du mockup publicitaire 3D...");
-      await api.post('/marketing/mockup', { bookId: currentBookId, variantId: 1 });
-
-      setResultData({ pdfUrl: pdfResult.pdfPath });
-      localStorage.removeItem('neno_draft_ebook_v1'); // Clean on success
+      
     } catch (error) {
       console.error(error);
       const errMsg = error.response?.data?.error || error.response?.data?.message || error.message;
-      alert(`Erreur lors de la génération : ${errMsg}. Reprenez le processus.`);
+      alert(`Erreur lors du lancement : ${errMsg}. Veuillez réessayer.`);
       setStep(4);
-    } finally {
       setIsGenerating(false);
-      setProgressMessage('');
-      if (sseSource) sseSource.close();
-      if (sseSourceRef.current) sseSourceRef.current.close();
     }
   };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import Card from './ui/Card';
 import { Clock, BookOpen, Image, CheckCircle, FileText, BarChart } from 'lucide-react';
+import { creditCosts } from '../config/creditCosts';
 
 export default function EstimationPanel({ formData, outline }) {
   const chapterCount = outline && outline.chapters 
@@ -14,7 +15,14 @@ export default function EstimationPanel({ formData, outline }) {
   const estimatedTimeMin = Math.round(estimatedTimeSec / 60);
   
   const estimatedPages = (chapterCount * 3) + 2; // 3 pages per chapter + cover & contact
-  const creditsCost = (1.0 + chapterCount * 0.1 + 0.2).toFixed(1);
+
+  // New Credit Cost Calculations based on creditCosts config
+  const costCover = creditCosts.cover_hd;
+  const costChapters = chapterCount * creditCosts.chapter_write;
+  const costIllustrations = chapterCount * creditCosts.illustration;
+  const costMarketing = creditCosts.mockup + creditCosts.product_sheet + creditCosts.tiktok_scripts + creditCosts.whatsapp_msgs;
+  
+  const totalCreditsCost = costCover + costChapters + costIllustrations + costMarketing;
 
   return (
     <Card className="p-5 bg-surface-1/40 border border-white/5 space-y-5 text-left h-fit w-full sticky top-6">
@@ -65,11 +73,11 @@ export default function EstimationPanel({ formData, outline }) {
           <div className="w-full">
             <p className="text-xs text-slate-400">Coût estimé en crédits IA</p>
             <div className="flex justify-between items-baseline mt-0.5">
-              <span className="text-sm font-extrabold text-brand-success">{creditsCost} crédits IA</span>
-              <span className="text-[10px] text-slate-500 font-mono">(1.0 Livre + {chapterCount * 0.1} Illus. + 0.2 Pubs)</span>
+              <span className="text-sm font-extrabold text-brand-success">{totalCreditsCost} crédits IA</span>
+              <span className="text-[10px] text-slate-500 font-mono">({costCover} Couv. + {costChapters} Ch. + {costIllustrations} Illus. + {costMarketing} Pub)</span>
             </div>
             <p className="text-[10px] text-slate-400 mt-2 leading-relaxed bg-white/5 p-2 rounded border border-white/5">
-              ⚡ Déduit de votre quota d'abonnement lors de la confirmation finale (1 ebook consommé).
+              ⚡ Déduit de votre quota d'abonnement lors du lancement de la génération finale.
             </p>
           </div>
         </div>

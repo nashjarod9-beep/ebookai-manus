@@ -28,6 +28,16 @@ const exportToPdf = async (req, res, next) => {
     });
 
     updateProgress(bookId, 'pdf_done', '✓ Ebook PDF compilé', { pdfPath });
+ 
+    // Log audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'export',
+        metadata: { format: 'pdf', bookId },
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
+    });
 
     res.json({ pdfPath });
   } catch (error) {
@@ -63,6 +73,16 @@ const exportToZip = async (req, res, next) => {
     await prisma.book.update({
       where: { id: bookId },
       data: { zipPath }
+    });
+
+    // Log audit log
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'export',
+        metadata: { format: 'zip', bookId },
+        ipAddress: req.ip || req.headers['x-forwarded-for'] || null
+      }
     });
 
     res.json({ zipPath });

@@ -1,4 +1,16 @@
 require('dotenv').config();
+const Sentry = require('@sentry/node');
+
+// Initialize Sentry before any other middleware or route import
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV || 'development'
+  });
+  console.log('[Sentry] Server initialized successfully.');
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -15,8 +27,16 @@ const aiRoutes = require('./routes/ai.routes');
 const exportRoutes = require('./routes/export.routes');
 const marketingRoutes = require('./routes/marketing.routes');
 const playgroundRoutes = require('./routes/playground.routes');
+const adminRoutes = require('./routes/admin.routes');
+const paymentRoutes = require('./routes/payment.routes');
+const accountRoutes = require('./routes/account.routes');
 
 const app = express();
+
+if (process.env.SENTRY_DSN) {
+  // Sentry v7 requestHandler setup
+  app.use(Sentry.Handlers?.requestHandler ? Sentry.Handlers.requestHandler() : (req, res, next) => next());
+}
 
 // Trust proxy (required for express-rate-limit behind reverse proxies like Vercel)
 app.set('trust proxy', 1);
@@ -24,7 +44,13 @@ app.set('trust proxy', 1);
 // Security and utility middlewares
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    if (req.originalUrl && req.originalUrl.startsWith('/api/webhooks/payment')) {
+      req.rawBody = buf.toString();
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
@@ -52,11 +78,22 @@ if (process.env.NODE_ENV !== 'production') {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/ebooks', ebookRoutes);
+app.use('/api/books', ebookRoutes); // Alias for compatibility
 app.use('/api/chapters', chapterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/marketing', marketingRoutes);
 app.use('/api/playground', playgroundRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/subscription', paymentRoutes);
+app.use('/api/credits', paymentRoutes);
+app.use('/api/webhooks/payment', paymentRoutes);
+app.use('/api/account', accountRoutes);
+
+if (process.env.SENTRY_DSN) {
+  // Sentry v7 errorHandler setup
+  app.use(Sentry.Handlers?.errorHandler ? Sentry.Handlers.errorHandler() : (err, req, res, next) => next(err));
+}
 
 // Error Handler
 app.use(errorHandler);
