@@ -1,8 +1,8 @@
 const { PrismaClient } = require('../backend/node_modules/@prisma/client');
 
 const run = async () => {
-  const url = "postgresql://postgres.fkgwawjqwzkdqoqwpnys:Nashjarod1997Ebook@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require&connect_timeout=30&connection_limit=1";
-  console.log("Testing port 5432 with connection_limit=1...");
+  const url = "postgresql://postgres.fkgwawjqwzkdqoqwpnys:Nashjarod1997Ebook@db.fkgwawjqwzkdqoqwpnys.supabase.co:5432/postgres?sslmode=require&connect_timeout=30";
+  console.log("Testing direct DB connection...");
   const prisma = new PrismaClient({
     datasources: {
       db: { url }

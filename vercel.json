@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build && cd ../backend && npm install && DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" npx prisma generate",
+  "buildCommand": "cd frontend && npm install && npm run build && cd ../backend && npm install && DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" npx prisma generate && npx prisma db push --accept-data-loss",
   "outputDirectory": "frontend/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" },
